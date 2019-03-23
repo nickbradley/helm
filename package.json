@@ -5,6 +5,8 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
+    "better-sqlite3": "^5.4.0",
+    "desktop-native": "https://github.com/nickbradley/desktop-native.git",
     "source-map-support": "^0.5.11"
   },
   "devDependencies": {
@@ -18,8 +20,11 @@
     "electron-webpack": "^2.6.2",
     "electron-webpack-ts": "^3.1.1",
     "mocha": "^6.0.0",
+    "prettier": "^1.16.4",
     "ts-node": "^8.0.2",
     "tslint": "^5.12.1",
+    "tslint-config-airbnb": "^5.11.1",
+    "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.3.4000",
     "webpack": "^4.29.6"
   },
