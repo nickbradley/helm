@@ -25,17 +25,15 @@
   },
   "scripts": {
     "dev": "electron-webpack dev",
+    "compile": "electron-webpack",
+    "dist": "yarn compile && electron-builder",
     "watch": "tsc -w",
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "start": "electron ./dist/main.js",
     "postinstall": "electron-builder install-app-deps",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "pack": "yarn dist --dir -c.compression=store -c.mac.identity=null"
   },
-  "files": [
-    "src/*"
-  ],
-  "main": "dist/main.js",
+  "main": "src/main/index.js",
   "engines": {
     "node": ">=10.0"
   },
