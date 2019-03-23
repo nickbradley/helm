@@ -1,0 +1,58 @@
+{
+  "name": "helm",
+  "version": "0.0.1",
+  "author": "Nick Bradley <ncbrad@cs.ubc.ca>",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "source-map-support": "^0.5.11"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^5.2.2",
+    "@types/chai": "^4.1.7",
+    "@types/dom-inputevent": "^1.0.3",
+    "@types/mocha": "^5.2.6",
+    "chai": "^4.2.0",
+    "electron": "^4.1.1",
+    "electron-builder": "^20.38.5",
+    "electron-webpack": "^2.6.2",
+    "electron-webpack-ts": "^3.1.1",
+    "mocha": "^6.0.0",
+    "ts-node": "^8.0.2",
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.4000",
+    "webpack": "^4.29.6"
+  },
+  "scripts": {
+    "dev": "electron-webpack dev",
+    "watch": "tsc -w",
+    "lint": "tslint -c tslint.json -p tsconfig.json",
+    "start": "electron ./dist/main.js",
+    "postinstall": "electron-builder install-app-deps",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "files": [
+    "src/*"
+  ],
+  "main": "dist/main.js",
+  "engines": {
+    "node": ">=10.0"
+  },
+  "keywords": [
+    "launcher"
+  ],
+  "cmake-js": {
+    "runtime": "electron",
+    "runtimeVersion": "4.0.0",
+    "arch": "x64"
+  },
+  "build": {
+    "mac": {
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": "pacman"
+    }
+  }
+}
