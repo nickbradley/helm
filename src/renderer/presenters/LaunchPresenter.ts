@@ -17,17 +17,16 @@ export class LaunchPresenter {
         this.view = view;
         const dataManager = new DataManager();
         this.model = new ResourceSearch(dataManager);
-        this.openWindows = Platform.listWindows();
+        this.openWindows = [];
+        // this.openWindows = Platform.listWindows();
         // query and cache info about apps on the system
         Platform.listApplications();
     }
 
     public onVisible(): void {
-        console.log("LaunchPresenter::onVisible()");
         // Force launch items to refresh
         this.onInputChanged();
         this.updateOpenWindowList();
-        console.log("Done");
     }
 
     public onHidden(): void {
@@ -61,7 +60,6 @@ export class LaunchPresenter {
         this.results = this.model.execute(this.openWindows, input);
         const viewItems: LaunchItem[] = [];
         for (const result of this.results) {
-            console.log("looking for appName", result.record.appName);
             const app = Platform.appCache.filter((app) => app.name === result.record.appName)[0];
             viewItems.push({
                 displayOrder: result.id,

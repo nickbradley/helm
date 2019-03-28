@@ -116,11 +116,9 @@ export class LaunchListView implements LaunchView {
     private keydownNotifier(ev: KeyboardEvent): void {
         switch(ev.key) {
             case "ArrowUp":
-                console.log("Arrow up");
                 this.presenter.onArrowUp();
                 break;
             case "ArrowDown":
-                console.log("Arrow down");
                 this.presenter.onArrowDown();
                 break;
             case "Enter":
