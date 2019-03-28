@@ -55,7 +55,6 @@
     </column>
     <index id="17" parent="6" name="bucketmodel_id">
       <ColNames>id</ColNames>
-      <ColumnCollations></ColumnCollations>
       <Unique>1</Unique>
     </index>
     <key id="18" parent="6">
@@ -89,11 +88,9 @@
     </column>
     <index id="24" parent="7" name="eventmodel_bucket_id">
       <ColNames>bucket_id</ColNames>
-      <ColumnCollations></ColumnCollations>
     </index>
     <index id="25" parent="7" name="eventmodel_timestamp">
       <ColNames>timestamp</ColNames>
-      <ColumnCollations></ColumnCollations>
     </index>
     <key id="26" parent="7">
       <ColNames>id</ColNames>

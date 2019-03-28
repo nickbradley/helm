@@ -22,38 +22,55 @@ export interface ResourceRecord {
 }
 
 export class ResourceSearch {
-    private readonly dataManager: DataManager;
     private readonly rankedResults: Statement;
 
     constructor(dataManager: DataManager) {
-        this.dataManager = dataManager;
-
         this.rankedResults = dataManager.prepare(`
-        with grouped as (
+        with  matches as (
+            select
+                id,
+                'reference' as match_on
+            from resource
+            where reference like @term
+            
+            union
+            
+            select
+                id,
+                'app_title' as match_on
+            from resource
+            where app_title like @term
+        ),
+        grouped as (
             select
                 tracker_name,
+                tracker_type,
                 app_name,
                 app_title,
                 reference,
                 project,
+                case 
+                    when min(match_on) != max(match_on) then 'both'
+                    else min(match_on)
+                end as match_on,
                 min(timestamp) as first_use,
                 max(timestamp) as last_use,
                 sum(duration) as duration,
                 count(*) as frequency,
                 max(timestamp) as recency,
                 sum(duration) as duration
-            from resource
-            where reference is not null and reference != 'Hello World!' -- helm title
-            and project = COALESCE(?, (select project from resource order by timestamp desc limit 1))
-            and reference LIKE @term OR app_title LIKE @term
-            group by tracker_name, app_name, app_title, reference
+            from resource join matches on resource.id = matches.id
+            --where project = COALESCE(?, (select project from resource order by timestamp desc limit 1))
+            group by resource.id, tracker_name, tracker_type, app_name, app_title, reference
         ), stats as (
             select
                 tracker_name,
+                tracker_type,
                 app_name,
                 app_title,
                 reference,
                 project,
+                match_on,
                 first_use,
                 last_use,
                 duration,
@@ -64,10 +81,12 @@ export class ResourceSearch {
         )
         select
             tracker_name as trackerName,
+            tracker_type as trackerType,
             app_name as appName,
             app_title as appTitle,
             reference,
             project,
+            match_on,
             first_use as firstUse,
             last_use as lastUse,
             duration,
@@ -78,10 +97,34 @@ export class ResourceSearch {
     `);
     }
 
-    public execute(openWindows: desktop.Window[], filter: string, project: string = null): Array<SearchResult<Resource>> {
+
+
+//     with grouped as (
+//       select
+//     tracker_name,
+//     tracker_type,
+//     app_name,
+//     app_title,
+//     reference,
+//     project,
+//     min(timestamp) as first_use,
+//     max(timestamp) as last_use,
+//     sum(duration) as duration,
+//     count(*) as frequency,
+//     max(timestamp) as recency,
+//     sum(duration) as duration
+//     from resource
+//     where reference is not null and reference != 'Hello World!' -- helm title
+//     and project = COALESCE(?, (select project from resource order by timestamp desc limit 1))
+//     and reference LIKE @term OR app_title LIKE @term
+//     group by tracker_name, app_name, app_title, reference
+// )
+//
+
+    public execute(openWindows: desktop.Window[], filter: string, project?: string): SearchResult<Resource>[] {
         const results = [];
         let i = 0;
-        const allResults = this.rankedResults.all(null, {term: `%${filter}%`});
+        const allResults = this.rankedResults.all({term: `%${filter}%`});
         for (const result of allResults) {
             i += 1;
             let addRecord = false;

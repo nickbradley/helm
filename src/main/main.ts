@@ -3,15 +3,20 @@ import * as path from "path";
 import { format as formatUrl } from 'url'
 import * as os from "os";
 
-// from https://github.com/kevinsawicki/tray-example
+declare const __static: string;
+const isDevelopment = process.env.NODE_ENV !== 'production';
+// https://github.com/electron-userland/electron-webpack/issues/52#issuecomment-362316068
+const staticPath = isDevelopment ? __static : __dirname.replace(/app\.asar$/, 'static');
 
 let tray: Tray;
 let mainWindow: BrowserWindow;
 
-const isDevelopment = process.env.NODE_ENV !== 'production';
+
 
 switch (os.platform()) {
     case "darwin":
+        // from https://github.com/kevinsawicki/tray-example
+
         // Don't show the app in the doc
         app.dock.hide();
         break;
@@ -25,7 +30,9 @@ switch (os.platform()) {
 
 app.on('ready', () => {
     createTray();
+    console.log("Done creating tray.");
     createWindow();
+    console.log("Done creating window");
     globalShortcut.register('Control+Space', () => {
         toggleWindow();
     });
@@ -41,7 +48,8 @@ app.on('window-all-closed', () => {
 });
 
 const createTray = () => {
-    tray = new Tray(path.join(__static, '/sunTemplate.png'));
+    // const assestPath = path.join(staticPath, '/static').replace(/\\/g, '\\\\');
+    tray = new Tray(path.join(staticPath, "/sunTemplate.png"));
     tray.on('right-click', toggleWindow);
     tray.on('double-click', toggleWindow);
     tray.on('click', (event: any) => {
@@ -66,6 +74,7 @@ const getWindowPosition = () => {
 };
 
 const createWindow = () => {
+    console.log("Creating window: ", isDevelopment);
     mainWindow = new BrowserWindow({
         width: 600,
         height: 450,

@@ -1,0 +1,38 @@
+#input-view {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+#input-view input {
+    /*background: url(./dist/assets/search.png) no-repeat scroll 2px 2px;*/
+    /*padding-left:30px;*/
+    /*background-size: 8px;*/
+    margin: 4px;
+    padding:4px;
+    width:50%;
+}
+
+body ol {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+body ol li {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    padding-top: 4px;
+}
+
+body ol li img {
+    width: 24px;
+    padding-right: 8px;
+    vertical-align: middle;
+}
+
+body ol li a {
+    color: inherit;
+    text-decoration: inherit;
+}

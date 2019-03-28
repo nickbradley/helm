@@ -36,7 +36,8 @@
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "start": "electron ./dist/main.js",
     "postinstall": "electron-builder install-app-deps",
-    "pack": "yarn dist --dir -c.compression=store -c.mac.identity=null"
+    "pack": "yarn dist --dir",
+    "pack2": "yarn compile && electron-builder --dir"
   },
   "main": "src/main/index.js",
   "engines": {

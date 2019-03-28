@@ -1,66 +1,51 @@
-import {LaunchView} from "../views/LaunchView";
-import {LaunchItem} from "../views/LaunchListView";
-import {ResourceSearch, SearchResult} from "../models/ResourceSearch";
-import {DataManager} from "../DataManager";
-import {Resource} from "../models/Resource";
-import {Platform} from "../../common/Platform";
-import * as desktop from "desktop-native";
-
-export class LaunchPresenter {
-    private readonly view: LaunchView;
-    private readonly model: ResourceSearch;
-    private results: SearchResult<Resource>[];
-    private openWindows: desktop.Window[];
-
-    constructor(view: LaunchView) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const ResourceSearch_1 = require("../models/ResourceSearch");
+const DataManager_1 = require("../DataManager");
+const Platform_1 = require("../../common/Platform");
+class LaunchPresenter {
+    constructor(view) {
         this.results = [];
         this.view = view;
-        const dataManager = new DataManager();
-        this.model = new ResourceSearch(dataManager);
-        this.openWindows = Platform.listWindows();
+        const dataManager = new DataManager_1.DataManager("/home/ncbradley/.local/share/activitywatch/aw-server/peewee-sqlite.v2.db");
+        this.model = new ResourceSearch_1.ResourceSearch(dataManager);
+        this.openWindows = Platform_1.Platform.listWindows();
         // query and cache info about apps on the system
-        Platform.listApplications();
+        Platform_1.Platform.listApplications();
     }
-
-    public onVisible(): void {
+    onVisible() {
         // Force launch items to refresh
         this.onInputChanged();
         this.updateOpenWindowList();
     }
-
-    public onHidden(): void {
+    onHidden() {
         // Blank the view to avoid refresh artifacts when the launcher is shown again.
         // Note: clearInput() does not invoke onInputChanged() saving a database query.
         this.view.clearInput();
         this.view.clearItems();
     }
-
-    public onArrowUp(): void {
+    onArrowUp() {
         this.view.focusPrevious();
     }
-
-    public onArrowDown(): void {
+    onArrowDown() {
         this.view.focusNext();
     }
-
-    public onOtherKey(): void {
+    onOtherKey() {
         this.view.focusInput();
     }
-
-    public onLaunchItemSelected(item: LaunchItem): void {
+    onLaunchItemSelected(item) {
         const result = this.getResultById(item.displayOrder);
         if (result) {
             result.record.open();
         }
     }
-
-    public onInputChanged(): void {
+    onInputChanged() {
         const input = this.view.input.value;
         this.results = this.model.execute(this.openWindows, input);
-        const viewItems: LaunchItem[] = [];
+        const viewItems = [];
         for (const result of this.results) {
             console.log("looking for appName", result.record.appName);
-            const app = Platform.appCache.filter((app) => app.name === result.record.appName)[0];
+            const app = Platform_1.Platform.appCache.filter((app) => app.name === result.record.appName)[0];
             viewItems.push({
                 displayOrder: result.id,
                 text: result.record.reference,
@@ -69,18 +54,17 @@ export class LaunchPresenter {
         }
         this.view.bind(viewItems);
     }
-
-    private getResultById(id: number): SearchResult<Resource> | null {
+    getResultById(id) {
         for (const result of this.results) {
             if (result.id === id) {
                 return result;
             }
         }
         return null;
-
     }
-
-    private updateOpenWindowList(): void {
-        this.openWindows = Platform.listWindows();
+    updateOpenWindowList() {
+        this.openWindows = Platform_1.Platform.listWindows();
     }
 }
+exports.LaunchPresenter = LaunchPresenter;
+//# sourceMappingURL=LaunchPresenter.js.map

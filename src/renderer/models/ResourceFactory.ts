@@ -1,15 +1,17 @@
 import {IdeaResource} from "./IdeaResource";
 import {Resource} from "./Resource";
+import {WebResource} from "./WebResource";
 
 export class ResourceFactory {
     public static createResource(record: any): Resource {
-        switch (record.trackerName) {
-            case "aw-watcher-idea":
-                console.log("Creating IdeaResource");
-                return new IdeaResource(record);
-            default:
-                console.log("Creating Resource");
-                return new Resource(record);
+        if (record.trackerName === "aw-watcher-idea") {
+            return new IdeaResource(record);
         }
+
+        if (record.trackerType === "web.tab.current") {
+            return new WebResource(record);
+        }
+
+        return new Resource(record);
     }
 }

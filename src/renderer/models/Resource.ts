@@ -1,5 +1,4 @@
-import {Platform} from "../Platform";
-// import {IdeaResource} from "./IdeaResource";
+import {Platform} from "../../common/Platform";
 
 export class Resource {
     public readonly firstUse: Date;
@@ -33,12 +32,13 @@ export class Resource {
     }
 
     public async open(): Promise<boolean> {
-        console.log("Opening resource ");
+        console.log("Open windows ", Platform.listWindows());
         const window = Platform.listWindows().filter((w) => w.title === this.appTitle)[0];
         if (window) {
             const windowId: string = window.identifier;
             return Platform.activateWindow(windowId);
         }
+        return false;
     }
 
     // public static resourceFromRecord(resourceRecord: any): Resource {
