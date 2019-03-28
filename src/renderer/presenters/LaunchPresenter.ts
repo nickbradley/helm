@@ -23,9 +23,11 @@ export class LaunchPresenter {
     }
 
     public onVisible(): void {
+        console.log("LaunchPresenter::onVisible()");
         // Force launch items to refresh
         this.onInputChanged();
         this.updateOpenWindowList();
+        console.log("Done");
     }
 
     public onHidden(): void {

@@ -56,9 +56,9 @@ const createTray = () => {
         toggleWindow();
 
         // // Show devtools when command clicked
-        // if (mainWindow.isVisible() && process.defaultApp && event.metaKey) {
-        //     mainWindow.openDevTools({mode: 'detach'})
-        // }
+        if (mainWindow.isVisible() && process.defaultApp && event.metaKey) {
+            mainWindow.webContents.openDevTools({mode: 'detach'})
+        }
     });
 };
 
@@ -85,9 +85,9 @@ const createWindow = () => {
         skipTaskbar: true,
     });
 
-    if (isDevelopment) {
+    //if (isDevelopment) {
         mainWindow.webContents.openDevTools()
-    }
+    //}
 
     if (isDevelopment) {
         mainWindow.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`)
