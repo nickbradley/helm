@@ -89,11 +89,9 @@ class LaunchListView {
     keydownNotifier(ev) {
         switch (ev.key) {
             case "ArrowUp":
-                console.log("Arrow up");
                 this.presenter.onArrowUp();
                 break;
             case "ArrowDown":
-                console.log("Arrow down");
                 this.presenter.onArrowDown();
                 break;
             case "Enter":

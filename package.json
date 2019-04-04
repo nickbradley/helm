@@ -19,6 +19,7 @@
     "electron-builder": "^20.38.5",
     "electron-webpack": "^2.6.2",
     "electron-webpack-ts": "^3.1.1",
+    "electron-webpack-vue": "^2.2.3",
     "mocha": "^6.0.0",
     "prettier": "^1.16.4",
     "ts-node": "^8.0.2",
@@ -26,6 +27,7 @@
     "tslint-config-airbnb": "^5.11.1",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.3.4000",
+    "vue": "^2.6.10",
     "webpack": "^4.29.6"
   },
   "scripts": {
