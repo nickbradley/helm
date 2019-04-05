@@ -6,7 +6,9 @@
     "strict": true,
     "noImplicitAny": true,
     "inlineSources": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
   "include": [
     "src/**/*"

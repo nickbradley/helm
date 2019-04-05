@@ -22,6 +22,7 @@
     import AcceleratorTabs from "./components/AcceleratorTabs.vue"
 
   export default {
+      name: "App",
       components: {
         Search,
         AcceleratorTabs

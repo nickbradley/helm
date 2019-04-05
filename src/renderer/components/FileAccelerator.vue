@@ -2,6 +2,7 @@
     <ol>
         <icon-list-item
                 v-for="file in files"
+                v-bind:key="file.id"
                 v-bind="file"
         ></icon-list-item>
     </ol>
