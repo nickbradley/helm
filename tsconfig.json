@@ -8,7 +8,11 @@
     "inlineSources": true,
     "sourceMap": true,
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "lib": [
+      "es2017",
+      "dom"
+    ]
   },
   "include": [
     "src/**/*"

@@ -1,7 +1,7 @@
 <template>
     <li>
         <img v-bind:src="icon"/>
-        <a href="#" tabindex="0" v-on:click="open">"{{label}}"</a>
+        <a href="#" tabindex="0" v-on:click="open">{{label}}</a>
     </li>
 </template>
 

@@ -4,15 +4,17 @@
                 v-for="window in windows"
                 v-bind:key="window.id"
                 v-bind="window"
-                v-bind:open="open"
+                v-bind:open="open.bind(this, window.label)"
         ></icon-list-item>
     </ol>
 </template>
 
-<script>
-  import { DB } from "../../common/DB";
-  import { Window } from "../../common/entity/Window";
+<script lang="ts">
+  import { Window } from "../../common/entities/Window";
   import IconListItem from "./IconListItem";
+  import { createQueryBuilder } from "typeorm";
+  import { Application } from "../../common/entities/Application";
+  import { Platform } from "../../common/Platform";
 
   export default {
     name: "WindowAccelerator",
@@ -21,43 +23,22 @@
       searchText: String,
       context: Object,
     },
-    data: function() {
-        return {}
-    },
-    computed: {
-      lookup: function() {
-        const obj = {
-          "apple": 1,
-          "pear": 2,
-          "peach": 3
-        };
-        let result = "No match";
-        for (const [key, value] of Object.entries(obj)) {
-          if (key.startsWith(this.searchText)) {
-            result = value;
-          }
-        }
-        return result;
-      }
-    },
     asyncComputed: {
       async windows () {
-        // TODO Call model to get results from the DB
-        console.log(this.searchText);
-        // const windows = [
-        //   {id: 1, icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==", label: "result 1", open: () => console.log("I would open something")},
-        //   {id: 2, icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==", label: "result 2", open: () => console.log("I would open 2")},
-        //   {id: 3, icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==", label: "result 3", open: () => console.log("I would open 3")}
-        // ];
-        const windows = await DB.connection.manager.find(Window);
-        //DB.connection.manager.find(Window).then(console.log).catch(console.error);
-        console.log(windows);
-        return windows;
+        return createQueryBuilder(Window)
+          .leftJoin(Application, "app", "app.name = window.appName")
+          .where("title like :search", {search: `%${this.searchText}%`})
+          .select("icon")
+          .addSelect("title", "label")
+          .getRawMany();
       }
     },
     methods: {
-      open: function () {
-        console.log("Open Window!");
+      open: function (title: string) {
+        const window = Platform.listWindows().filter((w) => w.title === title)[0];
+        if (window) {
+          Platform.activateWindow(window.identifier);
+        }
       }
     }
   };

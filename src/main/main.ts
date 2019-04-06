@@ -2,8 +2,10 @@ import {app, BrowserWindow, globalShortcut, Tray, screen} from "electron";
 import * as path from "path";
 import { format as formatUrl } from 'url'
 import * as os from "os";
-// import { DB } from "../common/DB";
-// import { Window } from "../common/entity/Window";
+import { DB } from "../common/DB";
+import { Window } from "../common/entities/Window";
+import { Application } from "../common/entities/Application";
+import { Platform } from "../common/Platform";
 
 declare const __static: string;
 const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -43,23 +45,35 @@ app.on('ready', async () => {
 
 
 
-  // await DB.connect();
-  //
-  // const windowData = [
-  //   {id: 1, icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==", label: "result 1", open: () => console.log("I would open something")},
-  //   {id: 2, icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==", label: "result 2", open: () => console.log("I would open 2")},
-  //   {id: 3, icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==", label: "result 3", open: () => console.log("I would open 3")}
-  // ];
-  //
-  // const windowEntities: Promise<any>[] = [];
-  // for (const d of windowData) {
-  //   const win = new Window();
-  //   win.icon = d.icon;
-  //   win.label = d.label;
-  //   windowEntities.push(DB.connection.manager.save(win));
-  // }
-  //
-  // await Promise.all(windowEntities);
+  await DB.connect();
+
+  const applications = Platform.listApplications();
+  const savePromises = [];
+  for (const app of applications) {
+    const application = new Application();
+    application.name = app.name;
+    application.icon = app.icon;
+    application.path = app.path;
+    savePromises.push(application.save());
+  }
+  await Promise.all(savePromises).then(()=>console.log("done")).catch((err)=>console.error("failed!", err));
+
+
+  const windowData = [
+    {id: 1, appName: "mailspring", title: ""},
+    {id: 2, appName: "spotify", title: "Spotify"},
+    {id: 3, appName: "firefox", title: ""}
+  ];
+
+  const windowEntities: Promise<any>[] = [];
+  for (const d of windowData) {
+    const win = new Window();
+    win.appName = d.appName;
+    win.title = d.title;
+    windowEntities.push(DB.connection.manager.save(win));
+  }
+
+  await Promise.all(windowEntities);
 
 
 });

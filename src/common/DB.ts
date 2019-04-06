@@ -1,5 +1,6 @@
 import { Connection, createConnection } from "typeorm";
-import { Window } from "./entity/Window";
+import { Window } from "./entities/Window";
+import { Application } from "./entities/Application";
 
 export class DB {
   private static connectionInstance: Connection;
@@ -9,11 +10,12 @@ export class DB {
 
   public static async connect(): Promise<Connection> {
     DB.connectionInstance = await createConnection({
-      name: "sqlite",
+      name: "default",
       type: "sqlite",
       database: "/tmp/aaa.db",
       entities: [
-        Window
+        Window,
+        Application
       ],
       synchronize: true,
       logging: false

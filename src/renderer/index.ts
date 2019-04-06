@@ -3,6 +3,7 @@ import * as AsyncComputed from "vue-async-computed";
 import App from "./App.vue";
 import { DB } from "../common/DB";
 
+// @ts-ignore
 Vue.use(AsyncComputed);
 
 (async () => {

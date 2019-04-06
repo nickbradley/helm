@@ -26,7 +26,7 @@ export class Platform {
 
     public static listApplications(): desktop.Application[] {
         Platform.appCache = desktop.listApplications();
-        console.log("appCache was set to ", Platform.appCache);
+        // console.log("appCache was set to ", Platform.appCache);
         return Platform.appCache;
     }
 
