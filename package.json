@@ -5,8 +5,10 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
-    "better-sqlite3": "^5.4.0",
     "desktop-native": "https://github.com/nickbradley/desktop-native.git",
+    "reflect-metadata": "^0.1.13",
+    "restify": "^8.2.0",
+    "restify-cors-middleware": "^1.1.1",
     "source-map-support": "^0.5.11",
     "sqlite3": "^4.0.6",
     "typeorm": "^0.2.16",
@@ -17,6 +19,9 @@
     "@types/chai": "^4.1.7",
     "@types/dom-inputevent": "^1.0.3",
     "@types/mocha": "^5.2.6",
+    "@types/restify": "^7.2.9",
+    "@types/restify-cors-middleware": "^1.0.1",
+    "asar": "^1.0.0",
     "chai": "^4.2.0",
     "electron": "^4.1.1",
     "electron-builder": "^20.38.5",
@@ -35,6 +40,7 @@
   },
   "scripts": {
     "dev": "electron-webpack dev",
+    "compile:main": "electron-webpack main",
     "compile": "electron-webpack",
     "dist": "yarn compile && electron-builder",
     "watch": "tsc -w",
@@ -62,6 +68,14 @@
     },
     "linux": {
       "target": "pacman"
+    }
+  },
+  "electronWebpack": {
+    "main": {
+      "webpackConfig": "webpack.renderer.additions.js"
+    },
+    "renderer": {
+      "webpackConfig": "webpack.renderer.additions.js"
     }
   }
 }

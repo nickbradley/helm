@@ -11,8 +11,8 @@
 
 <script lang="ts">
   import { Window } from "../../common/entities/Window";
-  import IconListItem from "./IconListItem";
-  import { createQueryBuilder } from "typeorm";
+  import IconListItem from "./IconListItem.vue";
+  // import { createQueryBuilder } from "typeorm";
   import { Application } from "../../common/entities/Application";
   import { Platform } from "../../common/Platform";
 
@@ -24,10 +24,10 @@
       context: Object,
     },
     asyncComputed: {
-      async windows () {
-        return createQueryBuilder(Window)
+      async windows (): Promise<{title: string, icon: string}[]> {
+        return Window.createQueryBuilder()
           .leftJoin(Application, "app", "app.name = window.appName")
-          .where("title like :search", {search: `%${this.searchText}%`})
+          .where("title like :search", {search: `%${(this as any).searchText}%`})
           .select("icon")
           .addSelect("title", "label")
           .getRawMany();

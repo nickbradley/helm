@@ -1,33 +1,29 @@
 import { Connection, createConnection } from "typeorm";
 import { Window } from "./entities/Window";
 import { Application } from "./entities/Application";
+import { Browser } from "./entities/Browser";
+import { Editor } from "./entities/Editor";
+import { Interaction } from "./entities/Interaction";
+import { Shell } from "./entities/Shell";
+import { Tracker } from "./entities/Tracker";
 
 export class DB {
-  private static connectionInstance: Connection;
-  constructor() {
-
-  }
-
   public static async connect(): Promise<Connection> {
-    DB.connectionInstance = await createConnection({
-      name: "default",
-      type: "sqlite",
-      database: "/tmp/aaa.db",
-      entities: [
-        Window,
-        Application
+    return createConnection({
+      "type": "sqlite",
+      "database": `/home/ncbradley/.config/helm.db`,
+      "entities": [
+        Application,
+        Browser,
+        Editor,
+        Interaction,
+        Shell,
+        Tracker,
+        Window
       ],
-      synchronize: true,
-      logging: false
+      "synchronize": true,
+      "logging": false,
+      "logger": "simple-console"
     });
-    return DB.connectionInstance;
-  }
-
-  static get connection(): Connection {
-    if (!DB.connectionInstance) {
-      throw new Error("You must connect to the database.");
-    }
-
-    return DB.connectionInstance;
   }
 }
