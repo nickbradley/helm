@@ -72,10 +72,10 @@
   },
   "electronWebpack": {
     "main": {
-      "webpackConfig": "webpack.renderer.additions.js"
+      "webpackConfig": "webpack.main.js"
     },
     "renderer": {
-      "webpackConfig": "webpack.renderer.additions.js"
+      "webpackConfig": "webpack.renderer.js"
     }
   }
 }

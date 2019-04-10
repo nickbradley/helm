@@ -3,38 +3,27 @@ import * as path from "path";
 import { format as formatUrl } from "url";
 import * as os from "os";
 import { Server } from "./Server";
-// import { createConnection } from "typeorm";
 import { Application } from "../common/entities/Application";
-// import { Tracker } from "../common/entities/Tracker";
-// import { Window } from "../common/entities/Window";
-// import { Browser } from "../common/entities/Browser";
 import { Platform } from "../common/Platform";
-// import { Editor } from "../common/entities/Editor";
-// import { Interaction } from "../common/entities/Interaction";
-// import { Shell } from "../common/entities/Shell";
 import { DB } from "../common/DB";
-// import { spawn } from "child_process";
-// import { DB } from "../common/DB";
-// import { Window } from "../common/entities/Window";
-// import { Application } from "../common/entities/Application";
-// import { Platform } from "../common/Platform";
-// import {fork} from "child_process";
+import { spawn } from "child_process";
+import Log from "../common/Log";
 
-// declare const __static: string;
+declare const __static: string;
 const isDevelopment = process.env.NODE_ENV !== "production";
 // https://github.com/electron-userland/electron-webpack/issues/52#issuecomment-362316068
-const staticPath = isDevelopment ? "./src/static"  : __dirname.replace(/app\.asar$/, "static");
-// const staticPath = isDevelopment ? __static  : __dirname.replace(/app\.asar$/, "static");
+// const staticPath = isDevelopment ? "./src/static"  : __dirname.replace(/app\.asar$/, "static");
+const staticPath = isDevelopment ? __static  : __dirname.replace(/app\.asar$/, "static");
 
 let tray: Tray;
 let mainWindow: BrowserWindow;
 
 (async () => {
-  await DB.connect();
-  const server = new Server("HelmWatcher");
+  const dbPath = path.join(app.getPath("appData"), "helm/helm.db");
+  console.log("Connecting to database at ", dbPath);
+  await DB.connect(dbPath);
 
   const applications = Platform.listApplications();
-
   const savePromises = [];
   for (const app of applications) {
     const application = new Application();
@@ -43,20 +32,34 @@ let mainWindow: BrowserWindow;
     application.path = app.path;
     savePromises.push(application.save());
   }
-  await Promise.all(savePromises).then(()=>console.log("done")).catch((err)=>console.error("failed!", err));
+  await Promise.all(savePromises);
 
-
+  const server = new Server("HelmWatcher");
   await server.start(5600);
-  // const ps = spawn("/home/ncbradley/do/activitywatch/dist/activitywatch/aw-watcher-window");
+
+  const awPath = process.env.AW_PATH;
+  if (!awPath) {
+    Log.error("Invalid path to ActivityWatch distribution. Make AW_PATH is set.");
+    return process.exit(1);
+  }
+  console.log("AW_PATH=", awPath);
+  const windowWatcher = spawn(path.join(awPath, "aw-watcher-window"));
   // ps.stderr.on("data", (data) => {
   //   console.error(data.toString());
   // });
   // ps.stdout.on("data", (data) => {
   //   console.log(data.toString());
   // });
-  // ps.on("error", (code) => {
-  //   console.error("aw-watcher-window failed unexpectedly with code ", code);
-  // });
+  windowWatcher.on("error", (code) => {
+    console.error("aw-watcher-window failed unexpectedly with code ", code);
+  });
+
+  const afkWatcher = spawn(path.join(awPath, "aw-watcher-afk"));
+  afkWatcher.on("error", (code) => {
+    console.error("aw-watcher-afk failed unexpectedly with code ", code);
+  });
+
+  return true;
 })();
 
 
@@ -74,47 +77,16 @@ switch (os.platform()) {
         break;
 }
 
-// console.log("Main--Creating fork...");
-// fork("./src/main/server/Daemon.js", [], {
-//     env: {
-//         ELECTRON_VERSION: "3.0.5"
-//     }});
+
 
 app.on("ready", async () => {
   createTray();
-  console.log("Done creating tray.");
-  createWindow();
-  console.log("Done creating window");
-  toggleWindow();
-
-  globalShortcut.register("Control+Space", () => {
-    toggleWindow();
-  });
-
-
-
-  // await DB.connect();
+  // createWindow();
   //
-
-  //
-  //
-  // const windowData = [
-  //   {id: 1, appName: "mailspring", title: ""},
-  //   {id: 2, appName: "spotify", title: "Spotify"},
-  //   {id: 3, appName: "firefox", title: ""}
-  // ];
-  //
-  // const windowEntities: Promise<any>[] = [];
-  // for (const d of windowData) {
-  //   const win = new Window();
-  //   win.appName = d.appName;
-  //   win.title = d.title;
-  //   windowEntities.push(DB.connection.manager.save(win));
-  // }
-  //
-  // await Promise.all(windowEntities);
-
-
+  // toggleWindow();
+  // globalShortcut.register("Control+Space", () => {
+  //   toggleWindow();
+  // });
 });
 
 app.on("will-quit", () => {
@@ -127,6 +99,7 @@ app.on("window-all-closed", () => {
 });
 
 const createTray = () => {
+  console.log("Creating tray");
     // const assestPath = path.join(staticPath, '/static').replace(/\\/g, '\\\\');
     tray = new Tray(path.join(staticPath, "/sunTemplate.png"));
     tray.on("right-click", toggleWindow);
@@ -152,6 +125,7 @@ const getWindowPosition = () => {
     return {x, y};
 };
 
+// @ts-ignore
 const createWindow = () => {
     console.log("Creating window: ", isDevelopment);
 

@@ -8,10 +8,10 @@ import { Shell } from "./entities/Shell";
 import { Tracker } from "./entities/Tracker";
 
 export class DB {
-  public static async connect(): Promise<Connection> {
+  public static async connect(database: string): Promise<Connection> {
     return createConnection({
       "type": "sqlite",
-      "database": `/home/ncbradley/.config/helm.db`,
+      "database": database,
       "entities": [
         Application,
         Browser,

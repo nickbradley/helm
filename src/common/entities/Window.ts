@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, ManyToOne } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn, BaseEntity, ManyToOne, ObjectLiteral } from "typeorm";
 import { Tracker } from "./Tracker";
 
 @Entity()
@@ -20,4 +20,9 @@ export class Window extends BaseEntity {
 
   @ManyToOne(type => Tracker, tracker => tracker.windows)
   tracker!: Tracker;
+
+  public compareEvent(event: ObjectLiteral): boolean {
+    return this.app === event.app &&
+      this.title === event.title
+  }
 }
