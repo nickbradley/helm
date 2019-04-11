@@ -1,66 +1,34 @@
 import {app, BrowserWindow, globalShortcut, Tray, screen} from "electron";
+import * as fs from "fs";
 import * as path from "path";
-import { format as formatUrl } from "url";
 import * as os from "os";
+import { format as formatUrl } from "url";
 import { Server } from "./Server";
 import { Application } from "../common/entities/Application";
 import { Platform } from "../common/Platform";
 import { DB } from "../common/DB";
-import { spawn } from "child_process";
+import "reflect-metadata";
 import Log from "../common/Log";
+import { spawn } from "child_process";
+import { ObjectLiteral } from "typeorm";
 
 declare const __static: string;
 const isDevelopment = process.env.NODE_ENV !== "production";
 // https://github.com/electron-userland/electron-webpack/issues/52#issuecomment-362316068
-// const staticPath = isDevelopment ? "./src/static"  : __dirname.replace(/app\.asar$/, "static");
 const staticPath = isDevelopment ? __static  : __dirname.replace(/app\.asar$/, "static");
+
+
+// Save userData in separate folders for each environment.
+// Thanks to this you can use production and development versions of the app
+// on same machine like those are two separate apps.
+if (isDevelopment) {
+  app.setPath("userData", path.join(app.getPath("appData"), "helm-dev"));
+}
+
 
 let tray: Tray;
 let mainWindow: BrowserWindow;
 
-(async () => {
-  const dbPath = path.join(app.getPath("appData"), "helm/helm.db");
-  console.log("Connecting to database at ", dbPath);
-  await DB.connect(dbPath);
-
-  const applications = Platform.listApplications();
-  const savePromises = [];
-  for (const app of applications) {
-    const application = new Application();
-    application.name = app.name;
-    application.icon = app.icon;
-    application.path = app.path;
-    savePromises.push(application.save());
-  }
-  await Promise.all(savePromises);
-
-  const server = new Server("HelmWatcher");
-  await server.start(5600);
-
-  const awPath = process.env.AW_PATH;
-  if (!awPath) {
-    Log.error("Invalid path to ActivityWatch distribution. Make AW_PATH is set.");
-    return process.exit(1);
-  }
-  console.log("AW_PATH=", awPath);
-  const windowWatcher = spawn(path.join(awPath, "aw-watcher-window"));
-  // ps.stderr.on("data", (data) => {
-  //   console.error(data.toString());
-  // });
-  // ps.stdout.on("data", (data) => {
-  //   console.log(data.toString());
-  // });
-  windowWatcher.on("error", (code) => {
-    console.error("aw-watcher-window failed unexpectedly with code ", code);
-  });
-
-  const afkWatcher = spawn(path.join(awPath, "aw-watcher-afk"));
-  afkWatcher.on("error", (code) => {
-    console.error("aw-watcher-afk failed unexpectedly with code ", code);
-  });
-
-  return true;
-})();
 
 
 switch (os.platform()) {
@@ -80,13 +48,15 @@ switch (os.platform()) {
 
 
 app.on("ready", async () => {
+  await initialize();
+
   createTray();
-  // createWindow();
-  //
-  // toggleWindow();
-  // globalShortcut.register("Control+Space", () => {
-  //   toggleWindow();
-  // });
+  createWindow();
+
+  toggleWindow();
+  globalShortcut.register("Control+Space", () => {
+    toggleWindow();
+  });
 });
 
 app.on("will-quit", () => {
@@ -127,8 +97,6 @@ const getWindowPosition = () => {
 
 // @ts-ignore
 const createWindow = () => {
-    console.log("Creating window: ", isDevelopment);
-
     mainWindow = new BrowserWindow({
         width: 600,
         height: 450,
@@ -139,9 +107,9 @@ const createWindow = () => {
         skipTaskbar: true
     });
 
-    //if (isDevelopment) {
+    if (isDevelopment) {
         mainWindow.webContents.openDevTools();
-    //}
+    }
 
     if (isDevelopment) {
         mainWindow.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`);
@@ -153,11 +121,6 @@ const createWindow = () => {
             slashes: true
         }));
     }
-
-
-
-    // mainWindow.loadFile(path.join(__dirname, "../index.html"));
-    // mainWindow.webContents.openDevTools();
 
     // Hide the window when it loses focus
     mainWindow.on("blur", () => {
@@ -188,4 +151,86 @@ const showWindow = () => {
 const hideWindow = () => {
     globalShortcut.unregister("Escape");
     mainWindow.hide();
+};
+
+
+const loadHostApplications = async () => {
+  const applications = Platform.listApplications();
+  const savePromises = [];
+  for (const app of applications) {
+    const application = new Application();
+    application.name = app.name;
+    application.icon = app.icon;
+    application.path = app.path;
+    savePromises.push(application.save());
+  }
+  return Promise.all(savePromises);
+};
+
+const startWatchers = async (dir: string) => {
+  const windowWatcher = spawn(path.join(dir, "aw-watcher-window"));
+  windowWatcher.on("error", (code: number) => {
+    Log.error(`aw-watcher-window failed unexpectedly with code ${code}.`);
+  });
+
+  const afkWatcher = spawn(path.join(dir, "aw-watcher-afk"));
+  afkWatcher.on("error", (code: number) => {
+    Log.error(`aw-watcher-afk failed unexpectedly with code ${code}.`);
+  });
+};
+
+
+
+const initialize = async () => {
+  Log.info(`Initializing main process...`);
+
+  let config: ObjectLiteral = {};
+  const configFile = path.join(app.getPath("userData"), "helmconfig.json");
+
+  try {
+    Log.info(`Reading config file from ${configFile}`);
+    config = JSON.parse(fs.readFileSync(configFile, "utf8"));
+  } catch (err) {
+    Log.fatal(`Failed to read ${configFile}. Please ensure the file exists and is valid JSON.`);
+    process.exit(1);
+  }
+
+  try {
+    Log.info(`Connecting to database.`);
+    await DB.connect();
+  } catch (err) {
+    Log.fatal(`Failed to connect to the database: ${err.message}`);
+    process.exit(1);
+  }
+
+  try {
+    Log.info(`Getting information about installed applications.`);
+    await loadHostApplications();
+  } catch (err) {
+    Log.fatal(`Failed to get information about installed applications: ${err.message}`);
+    process.exit(1);
+  }
+
+  try {
+    Log.info(`Starting ActivityWatch-compatible REST server.`);
+    const server = new Server("HelmWatcher");
+    await server.start(5600);
+  } catch (err) {
+    Log.fatal(`Failed to start ActivityWatch-compatible REST server: ${err.message}`);
+    process.exit(1);
+  }
+
+  try {
+    Log.info(`Starting hosted watchers.`);
+    const awPath = config.awPath;
+    if (awPath) {
+      await startWatchers(awPath);
+    } else {
+      Log.error(`Missing key 'awPath' in ${configFile}. Cannot start watchers; some features may be unavailable until the key is added to the config.`);
+    }
+  } catch (err) {
+    Log.error(`Failed to start watchers; some features may be unavailable until the error is resolved: ${err.message}`);
+  }
+
+  Log.info(`Initialization complete.`);
 };

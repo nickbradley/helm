@@ -1,5 +1,6 @@
 {
   "name": "helm",
+  "productName": "helm",
   "version": "0.0.1",
   "author": "Nick Bradley <ncbrad@cs.ubc.ca>",
   "license": "MIT",

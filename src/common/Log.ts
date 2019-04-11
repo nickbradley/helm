@@ -33,4 +33,8 @@ export default class Log {
       console.error(`[${new Date().toLocaleString()}] [ERROR] ${msg}`);
     }
   }
+
+  public static fatal(msg: string): void {
+    console.error(`[${new Date().toLocaleString()}] [FATAL] ${msg}`);
+  }
 }
