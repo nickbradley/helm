@@ -8,7 +8,7 @@ import { Shell } from "./entities/Shell";
 import { Tracker } from "./entities/Tracker";
 import * as path from "path";
 import { app, remote } from "electron";
-import Log from "./Log";
+import log from "electron-log";
 
 export class DB {
   public static async connect(): Promise<Connection> {
@@ -20,7 +20,7 @@ export class DB {
       userData = app.getPath("userData");
     }
     const dbPath = path.join(userData, "helm.db");
-    Log.info(`DB::connect() - Connecting to ${dbPath}`);
+    log.info(`DB::connect() - Connecting to ${dbPath}`);
 
     return createConnection({
       "type": "sqlite",
