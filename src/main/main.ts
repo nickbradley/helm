@@ -202,7 +202,7 @@ const initialize = async () => {
     config = JSON.parse(fs.readFileSync(configFile, "utf8"));
   } catch (err) {
     Log.error(`<FATAL> Failed to read ${configFile}. Please ensure the file exists and is valid JSON.`);
-    process.exit(1);
+    app.exit(1);
   }
 
   try {
@@ -210,7 +210,7 @@ const initialize = async () => {
     await DB.connect();
   } catch (err) {
     Log.error(`<FATAL> Failed to connect to the database: ${err.message}`);
-    process.exit(1);
+    app.exit(1);
   }
 
   try {
@@ -218,7 +218,7 @@ const initialize = async () => {
     await loadHostApplications();
   } catch (err) {
     Log.error(`<FATAL> Failed to get information about installed applications: ${err.message}`);
-    process.exit(1);
+    app.exit(1);
   }
 
   try {
@@ -227,7 +227,7 @@ const initialize = async () => {
     await server.start(5600);
   } catch (err) {
     Log.error(`<FATAL> Failed to start ActivityWatch-compatible REST server: ${err.message}`);
-    process.exit(1);
+    app.exit(1);
   }
 
   try {
