@@ -7,6 +7,7 @@
   "private": false,
   "dependencies": {
     "desktop-native": "https://github.com/nickbradley/desktop-native.git",
+    "electron-log": "^3.0.5",
     "reflect-metadata": "^0.1.13",
     "restify": "^8.2.0",
     "restify-cors-middleware": "^1.1.1",

@@ -8,7 +8,7 @@ import { Application } from "../common/entities/Application";
 import { Platform } from "../common/Platform";
 import { DB } from "../common/DB";
 import "reflect-metadata";
-import Log from "../common/Log";
+import Log from "electron-log";
 import { spawn } from "child_process";
 import { ObjectLiteral } from "typeorm";
 
@@ -24,6 +24,9 @@ const staticPath = isDevelopment ? __static  : __dirname.replace(/app\.asar$/, "
 if (isDevelopment) {
   app.setPath("userData", path.join(app.getPath("appData"), "helm-dev"));
 }
+
+// Configure logging
+Log.transports.file.fileName = `${app.getName()}.log`;
 
 
 let tray: Tray;
@@ -156,12 +159,19 @@ const hideWindow = () => {
 
 const loadHostApplications = async () => {
   const applications = Platform.listApplications();
+  const seenApps: string[] = [];
   const savePromises = [];
   for (const app of applications) {
+    if (seenApps.indexOf(app.name) >= 0) {
+      Log.verbose(`Skipping app ${app.name} because it has already been added.`);
+      continue;
+    }
+
     const application = new Application();
-    application.name = app.name;
+    application.name = app.name.toLowerCase();
     application.icon = app.icon;
     application.path = app.path;
+    seenApps.push(app.name);
     savePromises.push(application.save());
   }
   return Promise.all(savePromises);
@@ -191,7 +201,7 @@ const initialize = async () => {
     Log.info(`Reading config file from ${configFile}`);
     config = JSON.parse(fs.readFileSync(configFile, "utf8"));
   } catch (err) {
-    Log.fatal(`Failed to read ${configFile}. Please ensure the file exists and is valid JSON.`);
+    Log.error(`<FATAL> Failed to read ${configFile}. Please ensure the file exists and is valid JSON.`);
     process.exit(1);
   }
 
@@ -199,7 +209,7 @@ const initialize = async () => {
     Log.info(`Connecting to database.`);
     await DB.connect();
   } catch (err) {
-    Log.fatal(`Failed to connect to the database: ${err.message}`);
+    Log.error(`<FATAL> Failed to connect to the database: ${err.message}`);
     process.exit(1);
   }
 
@@ -207,7 +217,7 @@ const initialize = async () => {
     Log.info(`Getting information about installed applications.`);
     await loadHostApplications();
   } catch (err) {
-    Log.fatal(`Failed to get information about installed applications: ${err.message}`);
+    Log.error(`<FATAL> Failed to get information about installed applications: ${err.message}`);
     process.exit(1);
   }
 
@@ -216,7 +226,7 @@ const initialize = async () => {
     const server = new Server("HelmWatcher");
     await server.start(5600);
   } catch (err) {
-    Log.fatal(`Failed to start ActivityWatch-compatible REST server: ${err.message}`);
+    Log.error(`<FATAL> Failed to start ActivityWatch-compatible REST server: ${err.message}`);
     process.exit(1);
   }
 
