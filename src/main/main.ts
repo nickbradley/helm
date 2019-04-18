@@ -1,4 +1,4 @@
-import {app, BrowserWindow, globalShortcut, Tray, screen} from "electron";
+import { app, BrowserWindow, globalShortcut, Tray, screen } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -15,7 +15,7 @@ import { ObjectLiteral } from "typeorm";
 declare const __static: string;
 const isDevelopment = process.env.NODE_ENV !== "production";
 // https://github.com/electron-userland/electron-webpack/issues/52#issuecomment-362316068
-const staticPath = isDevelopment ? __static  : __dirname.replace(/app\.asar$/, "static");
+const staticPath = isDevelopment ? __static : __dirname.replace(/app\.asar$/, "static");
 
 
 // Save userData in separate folders for each environment.
@@ -33,21 +33,19 @@ let tray: Tray;
 let mainWindow: BrowserWindow;
 
 
-
 switch (os.platform()) {
-    case "darwin":
-        // from https://github.com/kevinsawicki/tray-example
+  case "darwin":
+    // from https://github.com/kevinsawicki/tray-example
 
-        // Don't show the app in the doc
-        // app.dock.hide();
-        break;
-    case "win32":
+    // Don't show the app in the doc
+    // app.dock.hide();
+    break;
+  case "win32":
 
-        break;
-    case "linux":
-        break;
+    break;
+  case "linux":
+    break;
 }
-
 
 
 app.on("ready", async () => {
@@ -63,99 +61,101 @@ app.on("ready", async () => {
 });
 
 app.on("will-quit", () => {
-    globalShortcut.unregisterAll();
+  globalShortcut.unregisterAll();
 });
 
 // Quit the app when the window is closed
 app.on("window-all-closed", () => {
-    app.quit();
+  app.quit();
 });
 
 // @ts-ignore
 const createTray = () => {
   console.log("Creating tray");
-    // const assestPath = path.join(staticPath, '/static').replace(/\\/g, '\\\\');
-    tray = new Tray(path.join(staticPath, "/sunTemplate.png"));
-    tray.on("right-click", toggleWindow);
-    tray.on("double-click", toggleWindow);
-    tray.on("click", (event: any) => {
-        toggleWindow();
+  // const assestPath = path.join(staticPath, '/static').replace(/\\/g, '\\\\');
+  tray = new Tray(path.join(staticPath, "/sunTemplate.png"));
+  tray.on("right-click", toggleWindow);
+  tray.on("double-click", toggleWindow);
+  tray.on("click", (event: any) => {
+    toggleWindow();
 
-        // // Show devtools when command clicked
-        if (mainWindow.isVisible() && process.defaultApp && event.metaKey) {
-            mainWindow.webContents.openDevTools({mode: "detach"});
-        }
-    });
+    // // Show devtools when command clicked
+    if (mainWindow.isVisible() && process.defaultApp && event.metaKey) {
+      mainWindow.webContents.openDevTools({ mode: "detach" });
+    }
+  });
 };
 
 const getWindowPosition = () => {
-    const windowBounds = mainWindow.getBounds();
-    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const windowBounds = mainWindow.getBounds();
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
-    // Center window on primary monitor
-    const x = Math.round((width/2) - (windowBounds.width / 2));
-    const y = Math.round((height / 2) - (windowBounds.height / 2));
+  // Center window on primary monitor
+  const x = Math.round((width / 2) - (windowBounds.width / 2));
+  const y = Math.round((height / 2) - (windowBounds.height / 2));
 
-    return {x, y};
+  return { x, y };
 };
 
 // @ts-ignore
 const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-    mainWindow = new BrowserWindow({
-        width: 0.66 * width,
-        height: 0.66 * height,
-        show: true,
-        frame: true,
-        fullscreenable: true,
-        resizable: true,
-        skipTaskbar: false
-    });
-
-    if (isDevelopment) {
-        mainWindow.webContents.openDevTools();
+  mainWindow = new BrowserWindow({
+    width: 0.66 * width,
+    height: 0.66 * height,
+    show: true,
+    frame: true,
+    fullscreenable: true,
+    resizable: true,
+    skipTaskbar: false,
+    webPreferences: {
+      webSecurity: false
     }
+  });
 
-    if (isDevelopment) {
-        mainWindow.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`);
-    }
-    else {
-        mainWindow.loadURL(formatUrl({
-            pathname: path.join(__dirname, "index.html"),
-            protocol: "file",
-            slashes: true
-        }));
-    }
+  if (isDevelopment) {
+    mainWindow.webContents.openDevTools();
+  }
 
-    // Hide the window when it loses focus
-    mainWindow.on("blur", () => {
-        if (!mainWindow.webContents.isDevToolsOpened()) {
-            mainWindow.hide();
-        }
-    });
+  if (isDevelopment) {
+    mainWindow.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`);
+  } else {
+    mainWindow.loadURL(formatUrl({
+      pathname: path.join(__dirname, "index.html"),
+      protocol: "file",
+      slashes: true
+    }));
+  }
+
+  // Hide the window when it loses focus
+  mainWindow.on("blur", () => {
+    if (!mainWindow.webContents.isDevToolsOpened()) {
+      mainWindow.hide();
+    }
+  });
 };
 
 const toggleWindow = () => {
-    if (mainWindow.isVisible()) {
-        hideWindow();
-    } else {
-        showWindow();
-    }
+  if (mainWindow.isVisible()) {
+    hideWindow();
+  } else {
+    showWindow();
+  }
 };
 
 const showWindow = () => {
-    const position = getWindowPosition();
-    mainWindow.setPosition(position.x, position.y, false);
-    mainWindow.show();
-    mainWindow.focus();
-    globalShortcut.register("Escape", () => {
-        hideWindow();
-    });
+  const position = getWindowPosition();
+  mainWindow.setPosition(position.x, position.y, false);
+  mainWindow.show();
+  mainWindow.focus();
+  globalShortcut.register("Escape", () => {
+    hideWindow();
+  });
 };
 
 const hideWindow = () => {
-    globalShortcut.unregister("Escape");
-    mainWindow.hide();
+  globalShortcut.unregister("Escape");
+  mainWindow.hide();
 };
 
 
@@ -190,7 +190,6 @@ const startWatchers = async (dir: string) => {
     Log.error(`aw-watcher-afk failed unexpectedly with code ${code}.`);
   });
 };
-
 
 
 const initialize = async () => {

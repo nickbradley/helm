@@ -1,0 +1,26 @@
+{
+  "name": "electron-webpack-quick-start",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "yarn tsc && electron-webpack dev",
+    "compile": "electron-webpack",
+    "dist": "yarn compile && electron-builder",
+    "dist:dir": "yarn dist --dir -c.compression=store -c.mac.identity=null"
+  },
+  "dependencies": {
+    "highlight.js": "^9.15.6",
+    "source-map-support": "^0.5.10",
+    "vue-async-computed": "^3.6.1"
+  },
+  "devDependencies": {
+    "electron": "4.0.1",
+    "electron-builder": "20.38.4",
+    "electron-webpack": "^2.6.2",
+    "electron-webpack-ts": "^3.1.1",
+    "electron-webpack-vue": "^2.2.3",
+    "typescript": "^3.4.3",
+    "vue": "^2.6.10",
+    "webpack": "4.28.4"
+  }
+}

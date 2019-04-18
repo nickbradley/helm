@@ -1,11 +1,14 @@
 <template>
     <div class="accelerator-tabs">
-        <button
-                v-for="tab in tabs"
+        <ul>
+            <li
+                v-for="(tab, index) in tabs"
                 v-bind:key="tab.component"
-                v-bind:class="['tab-button', { active: currentTab === tab }]"
-                v-on:click="currentTab = tab"
-        >{{ tab.component  }}</button>
+                :class='{"active-item": currentTabIndex === index}'
+            >{{tab.name}}
+
+            </li>
+        </ul>
 
         <keep-alive>
             <component
@@ -28,19 +31,52 @@
     },
     data: function () {
       return {
-        currentTab: this.tabs[0]
+        currentTabIndex: 0
       }
     },
     computed: {
       componentInstance () {
-        const name = this.currentTab.component;
-        return () => import(`./${name}`)
+        const name = this.tabs[this.currentTabIndex].component;
+        return () => import(`./accelerators/${name}`)
       }
-
     },
+      mounted () {
+        this.$root.$on("navLeft", () => {
+           if (this.currentTabIndex > 0) {
+               this.currentTabIndex--;
+           }
+        });
+
+        this.$root.$on("navRight", () => {
+            if (this.currentTabIndex < this.tabs.length - 1) {
+                this.currentTabIndex++;
+            }
+        })
+      },
   };
 </script>
 
 <style scoped>
+    ul {
+        display: flex;
+        padding: 0;
+        margin-bottom: 0;
+        list-style: none;
+        border-bottom: 2px solid lightgrey;
+    }
+
+    li {
+        color: grey;
+        padding: 10px 15px;
+    }
+
+    .accel-icon {
+        height: 32px;
+    }
+
+    .active-item {
+        color: #EA5E3D;
+        border-bottom: 3px solid #EA5E3D;
+    }
 
 </style>
