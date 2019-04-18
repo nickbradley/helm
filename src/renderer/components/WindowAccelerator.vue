@@ -26,7 +26,7 @@
     asyncComputed: {
       async windows (): Promise<{title: string, icon: string}[]> {
         return Window.createQueryBuilder()
-          .leftJoin(Application, "app", "app.name = window.appName")
+          .leftJoin(Application, "app", "app.name = lower(window.app)")
           .where("title like :search", {search: `%${(this as any).searchText}%`})
           .select("icon")
           .addSelect("title", "label")

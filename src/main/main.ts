@@ -39,7 +39,7 @@ switch (os.platform()) {
         // from https://github.com/kevinsawicki/tray-example
 
         // Don't show the app in the doc
-        app.dock.hide();
+        // app.dock.hide();
         break;
     case "win32":
 
@@ -53,10 +53,10 @@ switch (os.platform()) {
 app.on("ready", async () => {
   await initialize();
 
-  createTray();
+  // createTray();
   createWindow();
 
-  toggleWindow();
+  // toggleWindow();
   globalShortcut.register("Control+Space", () => {
     toggleWindow();
   });
@@ -71,6 +71,7 @@ app.on("window-all-closed", () => {
     app.quit();
 });
 
+// @ts-ignore
 const createTray = () => {
   console.log("Creating tray");
     // const assestPath = path.join(staticPath, '/static').replace(/\\/g, '\\\\');
@@ -100,14 +101,15 @@ const getWindowPosition = () => {
 
 // @ts-ignore
 const createWindow = () => {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     mainWindow = new BrowserWindow({
-        width: 600,
-        height: 450,
-        show: false,
-        frame: false,
-        fullscreenable: false,
-        resizable: false,
-        skipTaskbar: true
+        width: 0.66 * width,
+        height: 0.66 * height,
+        show: true,
+        frame: true,
+        fullscreenable: true,
+        resizable: true,
+        skipTaskbar: false
     });
 
     if (isDevelopment) {
