@@ -51,7 +51,7 @@ switch (os.platform()) {
 app.on("ready", async () => {
   await initialize();
 
-  // createTray();
+  createTray();
   createWindow();
 
   // toggleWindow();
@@ -77,10 +77,11 @@ const createTray = () => {
   tray.on("right-click", toggleWindow);
   tray.on("double-click", toggleWindow);
   tray.on("click", (event: any) => {
-    toggleWindow();
-
+    // console.log("Event is ", event);
+    // console.log("event.metakey", event.metaKey);
+    // toggleWindow();
     // // Show devtools when command clicked
-    if (mainWindow.isVisible() && process.defaultApp && event.metaKey) {
+    if (mainWindow.isVisible() ) { // && event.metaKey) {
       mainWindow.webContents.openDevTools({ mode: "detach" });
     }
   });
@@ -165,7 +166,7 @@ const loadHostApplications = async () => {
   const savePromises = [];
   for (const app of applications) {
     if (seenApps.indexOf(app.name) >= 0) {
-      Log.verbose(`Skipping app ${app.name} because it has already been added.`);
+      // Log.verbose(`Skipping app ${app.name} because it has already been added.`);
       continue;
     }
 
