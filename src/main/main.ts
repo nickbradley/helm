@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, Tray, screen } from "electron";
+import { app, BrowserWindow, globalShortcut, Menu, Tray, screen, ipcMain } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -46,6 +46,11 @@ switch (os.platform()) {
   case "linux":
     break;
 }
+
+ipcMain.on("hide", (event: any) => {
+  hideWindow();
+  event.returnValue = true;
+});
 
 
 app.on("ready", async () => {
