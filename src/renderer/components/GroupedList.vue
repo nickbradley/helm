@@ -31,7 +31,6 @@
     mounted() {
       // Set the first item in the list to be active
       const listElement = this.$el.getElementsByTagName("li")[0];
-      listElement.focus();
       listElement.tabIndex = 0;
       listElement.classList.toggle("active");
 
