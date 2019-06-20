@@ -147,7 +147,11 @@
     padding: 0;
   }
 
-  li {
+  p {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 15px;
   }
 
   li {
@@ -158,6 +162,7 @@
     padding-left: 14px;
     font-size: 0.8em;
     user-select: none;
+    vertical-align: middle;
   }
 
   li.active {

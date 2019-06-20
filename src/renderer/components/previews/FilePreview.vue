@@ -6,7 +6,7 @@
   import hljs from "highlight.js";
   import * as path from "path";
   import * as fs from "fs";
-  // TODO make this configurable?
+  // TODO make highlightjs configurable by the user?
   import "highlight.js/styles/idea.css";
 
 
@@ -14,7 +14,13 @@
   export default {
     name: "FilePreview",
     props: {
-      file: Object
+      item: Object
+    },
+    computed: {
+      file() {
+        // alias the item prop
+        return this.item;
+      }
     },
     asyncComputed: {
       async previewPaneFile() {
@@ -74,17 +80,9 @@
 </script>
 
 <style scoped>
-  /*div >>> .center {*/
-    /*display: flex;*/
-    /*justify-content: center;*/
-    /*align-items: center;*/
-    /*height: 100%;*/
-    /*flex-direction: column;*/
-    /*color: gray;*/
-  /*}*/
 
   div >>> pre {
-    margin: 0;
+    margin: 0 0 0 10px;
   }
 
   div >>> img {

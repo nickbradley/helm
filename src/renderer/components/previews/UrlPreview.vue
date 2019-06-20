@@ -1,12 +1,12 @@
 <template>
-  <webview v-bind:src="file.url"></webview>
+  <webview v-bind:src="item.url"></webview>
 </template>
 
 <script>
   export default {
     name: "UrlPreview",
     props: {
-      file: Object
+      item: Object
     }
   };
 </script>

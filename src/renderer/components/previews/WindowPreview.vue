@@ -1,8 +1,8 @@
 <template>
   <div class="centered">
-    <img v-if="file.screenshot" v-bind:src="this.file.screenshot" class="screenshot"/>
-    <img v-else v-bind:src="this.file.icon"/>
-    <p class="icon-caption">{{this.file.text.main}}</p>
+    <img v-if="window.screenshot" v-bind:src="this.window.screenshot" class="screenshot"/>
+    <img v-else v-bind:src="this.window.icon"/>
+    <p class="icon-caption">{{this.window.text.main}}</p>
   </div>
 </template>
 
@@ -10,8 +10,14 @@
   export default {
     name: "WindowPreview",
     props: {
-      file: Object
-    }
+      item: Object
+    },
+    computed: {
+      window() {
+        // alias the item prop https://github.com/vuejs/vue/issues/7943
+        return this.item;
+      }
+    },
   };
 </script>
 

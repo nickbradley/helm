@@ -2,7 +2,7 @@
   <div>
     <h3>Commands in session:</h3>
     <ul class="command-list">
-      <li v-for="(command, index) in file.commands">
+      <li v-for="(command, index) in item.commands">
         <input type="checkbox" v-bind:checked="command.isSelected" @click="onCommandClick(index, $event)">
         <span :class='{"failed-command": command.code !== 0}'>{{command.cmd}}</span>
       </li>
@@ -15,7 +15,7 @@
   export default {
     name: "ShellPreview",
     props: {
-      file: Object
+      item: Object
     },
     data() {
       return {
@@ -26,14 +26,14 @@
     methods: {
       onCommandClick(commandsIndex, event) {
         console.log("ShellAccelerator::onCommandClick() - ", commandsIndex, event.target.checked);
-        this.file.commands[commandsIndex]["isSelected"] = event.target.checked;
+        this.item.commands[commandsIndex]["isSelected"] = event.target.checked;
       }
     },
     computed: {
       shellCmd() {
         let shellCmd = "";
-        if (this.file.commands) {
-          const selectedCommands = this.file.commands.filter((command) => command.isSelected);
+        if (this.item.commands) {
+          const selectedCommands = this.item.commands.filter((command) => command.isSelected);
           if (selectedCommands.length > 0) {
             shellCmd = `<span>cd ${selectedCommands[0].cwd}</span><span class="and"> && </span>` + selectedCommands.map((command) => `<span>${command.cmd}</span>`).join(`<span class="and"> && </span>`);
           }
