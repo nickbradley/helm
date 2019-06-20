@@ -132,6 +132,10 @@
     font-size: 0.8em;
   }
 
+  dt::after {
+    content: "s";
+  }
+
   dd {
     margin: 0;
     padding: 0;

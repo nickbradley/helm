@@ -29,7 +29,8 @@
         currentItemIndex: 0
       };
     },
-    activated() {
+    mounted() {
+      console.log("***SelectableIconList was activated***");
       // TODO Registering and unregistering the event listeners in activated and deactivated is kind of a hack since
       // it assumes that this is embedded in a keep-alive component...
       this.$root.$on("navUp", () => {
@@ -55,7 +56,7 @@
       // Fire on load
       this.activeItemChanged();
     },
-    deactivated() {
+    unmounted() {
       this.$root.$off("navUp");
       this.$root.$off("navDown");
       this.$root.$off("enter");
