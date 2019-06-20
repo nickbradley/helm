@@ -7,7 +7,7 @@
           <ul>
             <li v-for="(item) in groupItems" tabindex="-1" @click="onClick" @dblclick="onTrigger">
               <p>
-                <img v-bind:src=item.icon>{{ item.text }}
+                <img v-bind:src=item.icon>{{ item.text.main }}
               </p>
             </li>
           </ul>
@@ -29,7 +29,13 @@
       };
     },
     mounted() {
-      this.$el.getElementsByTagName("li")[0].tabIndex = 0;
+      // Set the first item in the list to be active
+      const listElement = this.$el.getElementsByTagName("li")[0];
+      listElement.focus();
+      listElement.tabIndex = 0;
+      listElement.classList.toggle("active");
+
+      this.$emit("active", this.items[0]);
     },
     computed: {
       groupedItems() {
@@ -50,23 +56,18 @@
     methods: {
       onKeydown(event) {
         const listElements = this.$el.getElementsByTagName("li");
-        const currListElementIndex = this.activeItemIndex;
 
-        let nextListElementIndex = -1;
-        if (event.key === "ArrowDown") {
-          nextListElementIndex = currListElementIndex + 1;
-        } else if (event.key === "ArrowUp") {
-          nextListElementIndex = currListElementIndex - 1;
+        let nextListElement;
+        switch (event.key) {
+          case "ArrowDown":
+            nextListElement = listElements[this.activeItemIndex + 1];
+            break;
+          case "ArrowUp":
+            nextListElement = listElements[this.activeItemIndex - 1];
+            break;
         }
 
-        if (nextListElementIndex >= 0 && nextListElementIndex < listElements.length) {
-          listElements[nextListElementIndex].focus();
-          listElements[nextListElementIndex].tabIndex = 0;
-          listElements[currListElementIndex].tabIndex = -1;
-
-          this.activeItemIndex = nextListElementIndex;
-          this.$emit("active", this.items[nextListElementIndex]);
-        }
+        this.setActive(nextListElement);
       },
       onClick(event) {
         let nextElement = event.target;
@@ -75,33 +76,46 @@
           nextElement = nextElement.parentElement;
           depth++;
         }
-
-        if (nextElement.tabIndex === 0) {  // clicked on the focused item; do nothing
-          return;
-        }
-
-        const listElements = this.$el.getElementsByTagName("li");
-        const currListElementIndex = this.activeItemIndex;
-        let nextListElementIndex = -1;
-        for (const [idx, item] of Object.entries(listElements)) {
-          if (item === nextElement) {
-            nextListElementIndex = Number(idx);
-            break;
-          }
-        }
-
-        nextElement.focus();
-        nextElement.tabIndex = 0;
-        listElements[currListElementIndex].tabIndex = -1;
-
-        this.activeItemIndex = nextListElementIndex;
-        this.$emit("active", this.items[nextListElementIndex]);
+        this.setActive(nextElement);
       },
       onTrigger() {
         const triggeredItem = this.items[this.activeItemIndex];
         this.$emit("trigger", triggeredItem);
+      },
+      setActive(listElement) {
+        if (!listElement) {
+          console.warn("Invalid list element", listElement);
+          return;
+        }
+
+        const listElements = this.$el.getElementsByTagName("li");
+        const currActiveElement = listElements[this.activeItemIndex];
+        const nextActiveElement = listElement;
+
+        if (nextActiveElement === currActiveElement) {
+          console.warn("Activating same element.");
+          return;
+        }
+
+        nextActiveElement.classList.toggle("active");
+        currActiveElement.classList.toggle("active");
+        nextActiveElement.focus();
+        nextActiveElement.tabIndex = 0;
+        currActiveElement.tabIndex = -1;
+
+        let newItemId = -1;
+        for (const el of listElements) {
+          newItemId++;
+          if (el.tabIndex === 0) {
+            break;
+          }
+        }
+
+        this.activeItemIndex = newItemId;
+        this.$emit("active", this.items[this.activeItemIndex]);
+
       }
-    },
+    }
   };
 </script>
 
@@ -114,8 +128,9 @@
     display: inline-block;
     background: #e5e5ea;
     width: 100%;
-    padding: 8px 0 8px 30px;
+    padding: 8px 0 8px 14px;
     text-transform: uppercase;
+    font-size: 0.8em;
   }
 
   dd {
@@ -137,14 +152,19 @@
     width: 100%;
     text-decoration: none;
     color: inherit;
-    padding-left: 30px;
+    padding-left: 14px;
+    font-size: 0.8em;
+    user-select: none;
+  }
 
+  li.active {
+    background: #0a84ff66;
+    color: white;
+    outline: none;
   }
 
   li:focus {
     background: #0a84ff;
-    color: white;
-    outline: none;
   }
 
   img {
