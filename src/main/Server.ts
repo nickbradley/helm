@@ -12,7 +12,7 @@ export class Server {
   private readonly rest: restify.Server;
 
   constructor(name: string) {
-    this.rest = restify.createServer({name});
+    this.rest = restify.createServer({ name });
   }
 
   public async start(port: number) {
@@ -28,7 +28,6 @@ export class Server {
       });
       this.rest.pre(cors.preflight);
       this.rest.use(cors.actual);
-
 
 
       this.rest.pre((req: restify.Request, res: restify.Response, next: restify.Next) => {
@@ -55,10 +54,20 @@ export class Server {
       });
 
       this.rest.get("/api/0/buckets/:key", async (req: restify.Request, res: restify.Response, next: restify.Next) => {
-        try {
-          const bucket = Tracker.findOneOrFail({ key: req.params.key });
-          res.send(200, bucket);
-        } catch (err) {
+        const bucket = await Tracker.findOne({ key: req.params.key });
+
+        if (bucket) {
+          const metadata = {
+            id: bucket.key,  // I swapped key and id from what ActivityWatch uses
+            name: null,
+            type: bucket.type,
+            client: bucket.client,
+            hostname: bucket.hostname,
+            created: bucket.created.toISOString().replace("Z", "000+00:00") // "2019-06-22T12:09:45.569908+00:00" // This is the date format used by ActivityWatch
+          };
+
+          res.send(200, metadata);
+        } else {
           res.send(404, `There's no bucket named ${req.params.key}`);
         }
         return next();
@@ -66,12 +75,12 @@ export class Server {
 
       this.rest.post("/api/0/buckets/:key", async (req: restify.Request, res: restify.Response, next: restify.Next) => {
         const key = req.params.key;
-        const bucket = await Tracker.findOne({key});
+        const bucket = await Tracker.findOne({ key });
         if (bucket) {
           res.send(304);
         } else {
           await Tracker.insert({
-            ...{key, created: new Date()},
+            ...{ key, created: new Date() },
             ...req.body
           });
           res.send(200);
@@ -170,7 +179,7 @@ export class Server {
     return Promise.all(savePromise);
   }
 
-  private static async processHeartbeat(key: string, pulsetime: number, timestamp: Date, duration: number, data: {[key: string]: any}): Promise<{}> {
+  private static async processHeartbeat(key: string, pulsetime: number, timestamp: Date, duration: number, data: { [key: string]: any }): Promise<{}> {
     const tracker = await Tracker.findOneOrFail({ key });
     const entity = Server.getEntityByTrackerType(tracker.type);
     const record = await entity.findOne({
@@ -195,8 +204,8 @@ export class Server {
             return entity
               .createQueryBuilder()
               .update()
-              .set({duration: newDuration})
-              .where("id = :id", {id: record.id})
+              .set({ duration: newDuration })
+              .where("id = :id", { id: record.id })
               .execute();
           } else {
             console.warn("Duration would be negative");
