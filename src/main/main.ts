@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, Menu, Tray, screen, ipcMain } from "electron";
+import { app, BrowserWindow, globalShortcut, Tray, screen, ipcMain } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
