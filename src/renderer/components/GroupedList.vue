@@ -7,7 +7,7 @@
           <ul>
             <li v-for="(item) in groupItems" tabindex="-1" @click="onClick" @dblclick="onTrigger">
               <p>
-                <img v-bind:src=item.icon>{{ item.text.main }}
+                <img v-bind:src=item.icon>{{ item.title }}
               </p>
             </li>
           </ul>
@@ -31,6 +31,11 @@
     mounted() {
       // Set the first item in the list to be active
       const listElement = this.$el.getElementsByTagName("li")[0];
+
+      if (!listElement) {
+        return;
+      }
+
       listElement.tabIndex = 0;
       listElement.classList.toggle("active");
 

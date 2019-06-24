@@ -2,7 +2,7 @@
   <div class="centered">
     <img v-if="window.screenshot" v-bind:src="this.window.screenshot" class="screenshot"/>
     <img v-else v-bind:src="this.window.icon"/>
-    <p class="icon-caption">{{this.window.text.main}}</p>
+    <p class="icon-caption">{{this.window.title}}</p>
   </div>
 </template>
 

@@ -58,7 +58,7 @@
             } else {
               displayHtml = `<div class="centered">
                                 <img src="${this.file.icon}"/>
-                                <p class="icon-caption">${this.file.text.main}</p>
+                                <p class="icon-caption">${this.file.title}</p>
                                 <dl>
                                     <dt>Last opened:</dt><dd>${new Date(stats.atime).toLocaleString()}</dd>
                                     <dt>Modified:</dt><dd>${new Date(stats.mtime).toLocaleString()}</dd>

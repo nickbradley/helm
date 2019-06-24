@@ -13,7 +13,7 @@
     "restify-cors-middleware": "^1.1.1",
     "source-map-support": "^0.5.11",
     "sqlite3": "^4.0.6",
-    "typeorm": "^0.2.16",
+    "typeorm": "^0.2.17",
     "vue-async-computed": "^3.6.1"
   },
   "devDependencies": {
@@ -41,7 +41,7 @@
     "webpack": "^4.29.6"
   },
   "scripts": {
-    "dev": "electron-webpack dev",
+    "dev": "tsc && electron-webpack dev",
     "compile:main": "electron-webpack main",
     "compile": "electron-webpack",
     "dist": "yarn compile && electron-builder",
