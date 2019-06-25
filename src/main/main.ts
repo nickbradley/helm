@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, Tray, screen, ipcMain } from "electron";
+import { app, BrowserWindow, globalShortcut, Menu, Tray, screen, shell, ipcMain } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -31,7 +31,7 @@ Log.transports.file.fileName = `${app.getName()}.log`;
 
 let tray: Tray;
 let mainWindow: BrowserWindow;
-
+let server: Server;
 
 switch (os.platform()) {
   case "darwin":
@@ -65,28 +65,63 @@ app.on("ready", async () => {
   });
 });
 
-app.on("will-quit", () => {
-  globalShortcut.unregisterAll();
-});
-
-// Quit the app when the window is closed
-app.on("window-all-closed", () => {
-  app.quit();
-});
+// app.on("will-quit", async () => {
+//   console.log("App is quitting!!!");
+//   // await server.stop();
+//   // globalShortcut.unregisterAll();
+//   app.quit();
+// });
+//
+// // Quit the app when the window is closed
+// app.on("window-all-closed", () => {
+//   console.log("App should exit!!!");
+//   app.quit();
+// });
 
 // @ts-ignore
 const createTray = () => {
   console.log("Creating tray");
   // const assestPath = path.join(staticPath, '/static').replace(/\\/g, '\\\\');
-  tray = new Tray(path.join(staticPath, "/sunTemplate.png"));
+  tray = new Tray(path.join(staticPath, "/helm_128.png"));
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: "Show/Hide",
+      click() {
+        toggleWindow();
+      }
+    },
+    {
+      label: "Show DB file",
+      click() {
+        shell.showItemInFolder(DB.path);
+      }
+    },
+    {
+      type: "separator"
+    },
+    {
+      label: "Exit",
+      click() {
+        app.quit();
+      }
+    }
+
+  ]);
+
+  tray.setToolTip("This is my application.");
+  tray.setContextMenu(contextMenu);
+
   tray.on("right-click", toggleWindow);
-  tray.on("double-click", toggleWindow);
+  tray.on("double-click", () => {
+    console.log("tray dbl clicked");
+    toggleWindow();
+  });
   tray.on("click", (event: any) => {
     // console.log("Event is ", event);
     // console.log("event.metakey", event.metaKey);
     // toggleWindow();
     // // Show devtools when command clicked
-    if (mainWindow.isVisible() ) { // && event.metaKey) {
+    if (mainWindow.isVisible()) { // && event.metaKey) {
       mainWindow.webContents.openDevTools({ mode: "detach" });
     }
   });
@@ -230,7 +265,7 @@ const initialize = async () => {
 
   try {
     Log.info(`Starting ActivityWatch-compatible REST server.`);
-    const server = new Server("HelmWatcher");
+    server = new Server("HelmWatcher");
     await server.start(5600);
   } catch (err) {
     Log.error(`<FATAL> Failed to start ActivityWatch-compatible REST server: ${err.message}`);

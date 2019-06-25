@@ -12,6 +12,8 @@ import { app, remote } from "electron";
 import log from "electron-log";
 
 export class DB {
+  public static path: string;
+
   public static async connect(): Promise<Connection> {
     const isRenderer = (!process || typeof process === 'undefined' || process.type === 'renderer');
     let userData: string;
@@ -21,6 +23,7 @@ export class DB {
       userData = app.getPath("userData");
     }
     const dbPath = path.join(userData, "helm.db");
+    DB.path = dbPath;
     log.info(`DB::connect() - Connecting to ${dbPath}`);
 
     return createConnection({
