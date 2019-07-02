@@ -1,25 +1,66 @@
+import Log from "../backend/Log";
+
 import Vue from "vue";
 import * as AsyncComputed from "vue-async-computed";
+import * as fs from "fs";
+import * as path from "path";
+import { remote } from "electron";
 import App from "./App.vue";
-import { DB } from "../common/DB";
-import Log from "../common/Log";
+import { Daemon } from "../backend/Daemon";
 
-// @ts-ignore
-Vue.use(AsyncComputed);
+
+function renderUI() {
+  Log.info(`Starting Vue...`);
+
+  Vue.use(AsyncComputed as any);
+
+  new Vue({
+    el: "#app",
+    render: h => h(App, {
+      props: {backgroundWindowId: Number(new URLSearchParams(window.location.search).get("id"))}
+    })
+  });
+}
+
+async function startBackground() {
+  Log.info("Starting helm daemon process...");
+
+  let config: {[key: string]: any};
+  const configFile = path.join(remote.app.getPath("userData"), "helmconfig.json");
+  const dbPath = path.join(remote.app.getPath("userData"), "helm.db");
+  console.log("*** DATABASE ***", dbPath);
+
+  try {
+    Log.info(`Reading config file from ${configFile}`);
+    config = JSON.parse(fs.readFileSync(configFile, "utf8"));
+  } catch (err) {
+    Log.error(`<FATAL> Failed to read ${configFile}. Please ensure the file exists and is valid JSON.`);
+    return;
+  }
+
+  const daemon = new Daemon(5600, dbPath, config["awPath"]);
+  await daemon.start();
+
+  window.addEventListener("unload", async () => {
+    await daemon.stop();
+  });
+
+  Log.info("Helm daemon process is running.");
+}
+
 
 (async () => {
   Log.info(`Renderer process started.`);
 
-  try {
-    Log.info(`Connecting to database.`);
-    await DB.connect();
-  } catch (err) {
-    Log.error(`Failed to connect to the database: ${err.message}`);
+  const renderType = new URLSearchParams(window.location.search).get("type");
+  console.log("Starting with render type =", renderType);
+  switch (renderType) {
+    case "ui":
+      renderUI();
+      break;
+    case "background":
+      await startBackground();
+      break;
   }
-
-  Log.info(`Starting Vue...`);
-  new Vue({
-    el: '#app',
-    render: h => h(App),
-  });
 })();
+

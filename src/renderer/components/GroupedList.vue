@@ -28,7 +28,8 @@
         activeItemIndex: 0
       };
     },
-    mounted() {
+    updated() {
+      console.log("*** UPDATED ***");
       // Set the first item in the list to be active
       const listElement = this.$el.getElementsByTagName("li")[0];
 
@@ -37,9 +38,16 @@
       }
 
       listElement.tabIndex = 0;
-      listElement.classList.toggle("active");
+      listElement.classList.add("active");
 
-      this.$emit("active", this.items[0]);
+      this.activeItemIndex = 0;
+
+      // this.$emit("active", this.items[0]);
+    },
+    watch: {
+      activeItemIndex() {
+        this.$emit("active", this.items[this.activeItemIndex]);
+      }
     },
     computed: {
       groupedItems() {
@@ -116,7 +124,7 @@
         }
 
         this.activeItemIndex = newItemId;
-        this.$emit("active", this.items[this.activeItemIndex]);
+        // this.$emit("active", this.items[this.activeItemIndex]);
 
       }
     }

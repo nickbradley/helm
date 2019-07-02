@@ -1,11 +1,11 @@
 import * as restify from "restify";
 import * as corsMiddleware from "restify-cors-middleware";
-import { Browser } from "../common/entities/Browser";
-import { Editor } from "../common/entities/Editor";
-import { Interaction } from "../common/entities/Interaction";
-import { Shell } from "../common/entities/Shell";
-import { Tracker } from "../common/entities/Tracker";
-import { Window } from "../common/entities/Window";
+import { Browser } from "./entities/Browser";
+import { Editor } from "./entities/Editor";
+import { Interaction } from "./entities/Interaction";
+import { Shell } from "./entities/Shell";
+import { Tracker } from "./entities/Tracker";
+import { Window } from "./entities/Window";
 import { ObjectLiteral } from "typeorm";
 
 export class Server {

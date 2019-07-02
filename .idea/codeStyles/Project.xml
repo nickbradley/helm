@@ -1,5 +1,29 @@
 <component name="ProjectCodeStyleConfiguration">
   <code_scheme name="Project" version="173">
+    <DB2CodeStyleSettings version="2">
+      <option name="ALIAS_CASE" value="4" />
+      <option name="KEYWORD_CASE" value="1" />
+      <option name="TYPE_CASE" value="1" />
+      <option name="IDENTIFIER_CASE" value="1" />
+    </DB2CodeStyleSettings>
+    <DerbyCodeStyleSettings version="2">
+      <option name="ALIAS_CASE" value="4" />
+      <option name="KEYWORD_CASE" value="1" />
+      <option name="TYPE_CASE" value="1" />
+      <option name="IDENTIFIER_CASE" value="1" />
+    </DerbyCodeStyleSettings>
+    <H2CodeStyleSettings version="2">
+      <option name="ALIAS_CASE" value="4" />
+      <option name="KEYWORD_CASE" value="1" />
+      <option name="TYPE_CASE" value="1" />
+      <option name="IDENTIFIER_CASE" value="1" />
+    </H2CodeStyleSettings>
+    <HSQLCodeStyleSettings version="2">
+      <option name="ALIAS_CASE" value="4" />
+      <option name="KEYWORD_CASE" value="1" />
+      <option name="TYPE_CASE" value="1" />
+      <option name="IDENTIFIER_CASE" value="1" />
+    </HSQLCodeStyleSettings>
     <JSCodeStyleSettings version="0">
       <option name="FORCE_SEMICOLON_STYLE" value="true" />
       <option name="SPACE_BEFORE_FUNCTION_LEFT_PARENTH" value="false" />
@@ -8,12 +32,48 @@
       <option name="SPACES_WITHIN_OBJECT_LITERAL_BRACES" value="true" />
       <option name="SPACES_WITHIN_IMPORTS" value="true" />
     </JSCodeStyleSettings>
+    <MSSQLCodeStyleSettings version="2">
+      <option name="ALIAS_CASE" value="4" />
+      <option name="KEYWORD_CASE" value="1" />
+      <option name="TYPE_CASE" value="1" />
+      <option name="IDENTIFIER_CASE" value="1" />
+    </MSSQLCodeStyleSettings>
+    <MySQLCodeStyleSettings version="2">
+      <option name="ALIAS_CASE" value="4" />
+      <option name="KEYWORD_CASE" value="1" />
+      <option name="TYPE_CASE" value="1" />
+      <option name="IDENTIFIER_CASE" value="1" />
+    </MySQLCodeStyleSettings>
+    <OracleCodeStyleSettings version="2">
+      <option name="ALIAS_CASE" value="4" />
+      <option name="KEYWORD_CASE" value="1" />
+      <option name="TYPE_CASE" value="1" />
+      <option name="IDENTIFIER_CASE" value="1" />
+    </OracleCodeStyleSettings>
+    <PostgresCodeStyleSettings version="2">
+      <option name="ALIAS_CASE" value="4" />
+      <option name="KEYWORD_CASE" value="1" />
+      <option name="TYPE_CASE" value="1" />
+      <option name="IDENTIFIER_CASE" value="1" />
+    </PostgresCodeStyleSettings>
+    <SQLiteCodeStyleSettings version="2">
+      <option name="ALIAS_CASE" value="4" />
+      <option name="KEYWORD_CASE" value="1" />
+      <option name="TYPE_CASE" value="1" />
+      <option name="IDENTIFIER_CASE" value="1" />
+    </SQLiteCodeStyleSettings>
     <SqlCodeStyleSettings version="2">
       <option name="ALIAS_CASE" value="4" />
       <option name="KEYWORD_CASE" value="1" />
       <option name="TYPE_CASE" value="1" />
       <option name="IDENTIFIER_CASE" value="1" />
     </SqlCodeStyleSettings>
+    <SybaseCodeStyleSettings version="2">
+      <option name="ALIAS_CASE" value="4" />
+      <option name="KEYWORD_CASE" value="1" />
+      <option name="TYPE_CASE" value="1" />
+      <option name="IDENTIFIER_CASE" value="1" />
+    </SybaseCodeStyleSettings>
     <TypeScriptCodeStyleSettings version="0">
       <option name="FORCE_SEMICOLON_STYLE" value="true" />
       <option name="SPACE_BEFORE_FUNCTION_LEFT_PARENTH" value="false" />

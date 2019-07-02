@@ -25,7 +25,7 @@
     "@types/restify-cors-middleware": "^1.0.1",
     "asar": "^1.0.0",
     "chai": "^4.2.0",
-    "electron": "^4.1.1",
+    "electron": "4.1.1",
     "electron-builder": "^20.38.5",
     "electron-webpack": "^2.6.2",
     "electron-webpack-ts": "^3.1.1",
@@ -43,7 +43,7 @@
   "scripts": {
     "dev": "tsc && electron-webpack dev",
     "compile:main": "electron-webpack main",
-    "compile": "electron-webpack",
+    "compile": "tsc && electron-webpack",
     "dist": "yarn compile && electron-builder",
     "watch": "tsc -w",
     "lint": "tslint -c tslint.json -p tsconfig.json",
@@ -66,7 +66,8 @@
   },
   "build": {
     "mac": {
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "icon": "icons/png"
     },
     "linux": {
       "target": "pacman"

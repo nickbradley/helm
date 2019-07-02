@@ -1,22 +1,22 @@
-import { app, BrowserWindow, globalShortcut, Menu, Tray, screen, shell, ipcMain } from "electron";
-import * as fs from "fs";
+import { app, BrowserWindow, globalShortcut, Menu, Tray, screen, ipcMain } from "electron";
+// import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { format as formatUrl } from "url";
-import { Server } from "./Server";
-import { Application } from "../common/entities/Application";
-import { Platform } from "../common/Platform";
-import { DB } from "../common/DB";
+// import { Server } from "./Server";
+// import { Application } from "../common/entities/Application";
+// import { Platform } from "../common/Platform";
+// import { DB } from "../common/DB";
 import "reflect-metadata";
 import Log from "electron-log";
-import { spawn } from "child_process";
-import { ObjectLiteral } from "typeorm";
+// import { ObjectLiteral } from "typeorm";
+
 
 declare const __static: string;
 const isDevelopment = process.env.NODE_ENV !== "production";
 // https://github.com/electron-userland/electron-webpack/issues/52#issuecomment-362316068
 const staticPath = isDevelopment ? __static : __dirname.replace(/app\.asar$/, "static");
-
+// Log.info(`<TRACE> staticPath = ${staticPath} and __dirname = ${__dirname}`);
 
 // Save userData in separate folders for each environment.
 // Thanks to this you can use production and development versions of the app
@@ -31,7 +31,7 @@ Log.transports.file.fileName = `${app.getName()}.log`;
 
 let tray: Tray;
 let mainWindow: BrowserWindow;
-let server: Server;
+let backgroundWindow: BrowserWindow;
 
 switch (os.platform()) {
   case "darwin":
@@ -54,8 +54,6 @@ ipcMain.on("hide", (event: any) => {
 
 
 app.on("ready", async () => {
-  await initialize();
-
   createTray();
   createWindow();
 
@@ -82,7 +80,8 @@ app.on("ready", async () => {
 const createTray = () => {
   console.log("Creating tray");
   // const assestPath = path.join(staticPath, '/static').replace(/\\/g, '\\\\');
-  tray = new Tray(path.join(staticPath, "/helm_128.png"));
+  console.log("staticPath", staticPath);
+  tray = new Tray(path.join(staticPath, "/helm_16.png"));
   const contextMenu = Menu.buildFromTemplate([
     {
       label: "Show/Hide",
@@ -93,13 +92,22 @@ const createTray = () => {
     {
       label: "Show DB file",
       click() {
-        shell.showItemInFolder(DB.path);
+        // shell.showItemInFolder(DB.path);
       }
     },
     {
       type: "separator"
     },
     {
+      label: "Dev Tools",
+      click() {
+        mainWindow.webContents.openDevTools({ mode: "detach" });
+        backgroundWindow.webContents.openDevTools({ mode: "detach" });
+      }
+    },
+    {
+      type: "separator"
+    }, {
       label: "Exit",
       click() {
         app.quit();
@@ -119,11 +127,11 @@ const createTray = () => {
   tray.on("click", (event: any) => {
     // console.log("Event is ", event);
     // console.log("event.metakey", event.metaKey);
-    // toggleWindow();
+    toggleWindow();
     // // Show devtools when command clicked
-    if (mainWindow.isVisible()) { // && event.metaKey) {
-      mainWindow.webContents.openDevTools({ mode: "detach" });
-    }
+    // if (mainWindow.isVisible()) { // && event.metaKey) {
+    //   mainWindow.webContents.openDevTools({ mode: "detach" });
+    // }
   });
 };
 
@@ -141,7 +149,7 @@ const getWindowPosition = () => {
 // @ts-ignore
 const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  mainWindow = new BrowserWindow({
+  const devBrowserWindow = {
     width: 0.66 * width,
     height: 0.66 * height,
     show: true,
@@ -152,19 +160,49 @@ const createWindow = () => {
     webPreferences: {
       webSecurity: false
     }
-  });
+  };
 
+  const prodBrowserWindow = {
+    width: 0.66 * width,
+    height: 0.66 * height,
+    show: true,
+    frame: false,
+    fullscreenable: false,
+    resizable: false,
+    skipTaskbar: true,
+    webPreferences: {
+      webSecurity: false
+    }
+  };
+  mainWindow = new BrowserWindow(isDevelopment ? devBrowserWindow : prodBrowserWindow);
+  backgroundWindow = new BrowserWindow({ show: false });
   if (isDevelopment) {
     mainWindow.webContents.openDevTools();
+    backgroundWindow.webContents.openDevTools();
   }
+  const bgWindowId = backgroundWindow.webContents.id;
 
   if (isDevelopment) {
-    mainWindow.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}`);
+    mainWindow.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?type=ui&id=${bgWindowId}`);
+    backgroundWindow.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?type=background`);
   } else {
     mainWindow.loadURL(formatUrl({
       pathname: path.join(__dirname, "index.html"),
       protocol: "file",
-      slashes: true
+      slashes: true,
+      query: {
+        type: "ui",
+        id: bgWindowId
+      }
+    }));
+
+    backgroundWindow.loadURL(formatUrl({
+      pathname: path.join(__dirname, "index.html"),
+      protocol: "file",
+      slashes: true,
+      query: {
+        type: "background"
+      }
     }));
   }
 
@@ -197,92 +235,4 @@ const showWindow = () => {
 const hideWindow = () => {
   globalShortcut.unregister("Escape");
   mainWindow.hide();
-};
-
-
-const loadHostApplications = async () => {
-  const applications = Platform.listApplications();
-  const seenApps: string[] = [];
-  const savePromises = [];
-  for (const app of applications) {
-    if (seenApps.indexOf(app.name) >= 0) {
-      // Log.verbose(`Skipping app ${app.name} because it has already been added.`);
-      continue;
-    }
-
-    const application = new Application();
-    application.name = app.name.toLowerCase();
-    application.icon = app.icon;
-    application.path = app.path;
-    seenApps.push(app.name);
-    savePromises.push(application.save());
-  }
-  return Promise.all(savePromises);
-};
-
-const startWatchers = async (dir: string) => {
-  const windowWatcher = spawn(path.join(dir, "aw-watcher-window"));
-  windowWatcher.on("error", (code: number) => {
-    Log.error(`aw-watcher-window failed unexpectedly with code ${code}.`);
-  });
-
-  const afkWatcher = spawn(path.join(dir, "aw-watcher-afk"));
-  afkWatcher.on("error", (code: number) => {
-    Log.error(`aw-watcher-afk failed unexpectedly with code ${code}.`);
-  });
-};
-
-
-const initialize = async () => {
-  Log.info(`Initializing main process...`);
-
-  let config: ObjectLiteral = {};
-  const configFile = path.join(app.getPath("userData"), "helmconfig.json");
-
-  try {
-    Log.info(`Reading config file from ${configFile}`);
-    config = JSON.parse(fs.readFileSync(configFile, "utf8"));
-  } catch (err) {
-    Log.error(`<FATAL> Failed to read ${configFile}. Please ensure the file exists and is valid JSON.`);
-    app.exit(1);
-  }
-
-  try {
-    Log.info(`Connecting to database.`);
-    await DB.connect();
-  } catch (err) {
-    Log.error(`<FATAL> Failed to connect to the database: ${err.message}`);
-    app.exit(1);
-  }
-
-  try {
-    Log.info(`Getting information about installed applications.`);
-    await loadHostApplications();
-  } catch (err) {
-    Log.error(`<FATAL> Failed to get information about installed applications: ${err.message}`);
-    app.exit(1);
-  }
-
-  try {
-    Log.info(`Starting ActivityWatch-compatible REST server.`);
-    server = new Server("HelmWatcher");
-    await server.start(5600);
-  } catch (err) {
-    Log.error(`<FATAL> Failed to start ActivityWatch-compatible REST server: ${err.message}`);
-    app.exit(1);
-  }
-
-  try {
-    Log.info(`Starting hosted watchers.`);
-    const awPath = config.awPath;
-    if (awPath) {
-      await startWatchers(awPath);
-    } else {
-      Log.error(`Missing key 'awPath' in ${configFile}. Cannot start watchers; some features may be unavailable until the key is added to the config.`);
-    }
-  } catch (err) {
-    Log.error(`Failed to start watchers; some features may be unavailable until the error is resolved: ${err.message}`);
-  }
-
-  Log.info(`Initialization complete.`);
 };
