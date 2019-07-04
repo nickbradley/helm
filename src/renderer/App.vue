@@ -141,6 +141,7 @@
   .list-pane {
     flex: 0 0 40%;
     overflow-x: hidden;
+    overflow-y: scroll;
   }
 
   .preview-pane {

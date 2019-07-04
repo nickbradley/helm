@@ -1,6 +1,12 @@
+
 <template>
   <div>
+    <template v-if="items.length === 0">
+      <p class="no-result">Sorry, there weren't any results.<br/>Is the active project correct?</p>
+    </template>
+    <template v-else>
     <dl v-on:keydown="onKeydown" @keydown.enter="onTrigger">
+
       <template v-for="(groupItems, group) in groupedItems">
         <dt>{{ group }}</dt>
         <dd>
@@ -14,6 +20,7 @@
         </dd>
       </template>
     </dl>
+    </template>
   </div>
 </template>
 
@@ -191,5 +198,12 @@
 
   li a div {
     display: inline-block;
+  }
+
+  .no-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 90%;
   }
 </style>
