@@ -10,7 +10,7 @@
     <div class="wrapper">
       <GroupedList class="list-pane" v-on:active="onActive" v-on:trigger="onTrigger"
                    v-bind:items="searchResults"></GroupedList>
-      <component class="preview-pane" v-bind:item="activeItem" v-bind:is="previewComponent"></component>
+      <component v-if="searchResults.length > 0" class="preview-pane" v-bind:item="activeItem" v-bind:is="previewComponent"></component>
     </div>
   </div>
 </template>

@@ -46,12 +46,9 @@
       listElement.tabIndex = 0;
       listElement.classList.add("active");
 
+
       this.activeItemIndex = 0;
-    },
-    watch: {
-      activeItemIndex() {
-        this.$emit("active", this.items[this.activeItemIndex]);
-      }
+      this.$emit("active", this.items[this.activeItemIndex]);
     },
     computed: {
       groupedItems() {
@@ -128,6 +125,7 @@
         }
 
         this.activeItemIndex = newItemId;
+        this.$emit("active", this.items[this.activeItemIndex]);
       }
     }
   };
