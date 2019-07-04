@@ -29,7 +29,6 @@
       };
     },
     updated() {
-      console.log("*** UPDATED ***");
       // Set the first item in the list to be active
       const listElement = this.$el.getElementsByTagName("li")[0];
 
@@ -41,8 +40,6 @@
       listElement.classList.add("active");
 
       this.activeItemIndex = 0;
-
-      // this.$emit("active", this.items[0]);
     },
     watch: {
       activeItemIndex() {
@@ -124,8 +121,6 @@
         }
 
         this.activeItemIndex = newItemId;
-        // this.$emit("active", this.items[this.activeItemIndex]);
-
       }
     }
   };

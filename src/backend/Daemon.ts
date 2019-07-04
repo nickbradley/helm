@@ -11,6 +11,7 @@ import { Platform } from "../common/Platform";
 import { Application } from "./entities/Application";
 import { ContextModel } from "./ContextModel";
 import {ipcRenderer} from "electron";
+import { getRepository } from "typeorm";
 
 export class Daemon {
   public readonly restPort: number;
@@ -19,11 +20,11 @@ export class Daemon {
 
   private db: Database;
   private model: ContextModel;
-  // @ts-ignore
   private server: Server;
   private windowWatcher!: ChildProcess;
   private afkWatcher!: ChildProcess;
 
+  private canCollectData: boolean;
 
   constructor(restPort: number, dbPath: string, awPath: string) {
     Log.info(`Daemon::init() - Initializing process.`);
@@ -35,6 +36,12 @@ export class Daemon {
     this.db = new Database(this.dbPath);
     this.model = new ContextModel();
     this.server = new Server("HelmWatcher");
+
+    this.canCollectData = true;
+  }
+
+  public dataCollectionStatus() {
+    return this.canCollectData ? "running" : "paused";
   }
 
   public async start() {
@@ -42,10 +49,10 @@ export class Daemon {
     await this.db.connect();
 
     Log.info(`Daemon::start() - Getting information about installed applications.`);
-    // await this.loadHostApplications();
+    await this.loadHostApplications();
 
     Log.info(`Daemon::start() - Starting ActivityWatch-compatible REST server.`);
-    // await this.server.start(this.restPort);
+    await this.server.start(this.restPort);
 
     Log.info(`Daemon::start() - Starting hosted watchers.`);
     await this.startWatchers();
@@ -57,7 +64,25 @@ export class Daemon {
   }
 
   public async stop() {
-    // TODO
+    Log.info(`Daemon::stop() - Stopping hosted watchers.`);
+    // TODO Check if there was an error that already kill process (so we don't
+    // inadvertently kill some random process
+    this.windowWatcher.kill("SIGINT");
+    this.afkWatcher.kill("SIGINT");
+
+    Log.info(`Daemon::stop() - Stopping REST server.`);
+    await this.server.stop();
+
+    Log.info("Daemon::stop() - Removing event listeners.");
+    ipcRenderer.removeAllListeners("search");
+  }
+
+  public pauseDataCollection() {
+    this.canCollectData = false;
+  }
+
+  public resumeDataCollection() {
+    this.canCollectData = true;
   }
 
   private async startWatchers() {
@@ -75,33 +100,20 @@ export class Daemon {
   // @ts-ignore
   private async loadHostApplications() {
     const applications = Platform.listApplications();
-    const seenApps: string[] = [];
-    const savePromises: any[] = [];
-    console.log("Total apps", applications.length);
-    let count = 0;
+    const appEntities: Application[] = [];
+
     for (const app of applications) {
-      count += 1;
-      console.log("Processing app", app.name);
-      if (seenApps.indexOf(app.name) >= 0) {
-        // Log.verbose(`Skipping app ${app.name} because it has already been added.`);
-        continue;
-      }
-
-      // FIXME
-      if (count >294) {
-        break;
-      }
-
       const application = new Application();
       application.name = app.name.toLowerCase();
       application.icon = app.icon;
       application.path = app.path;
-      seenApps.push(app.name);
-      savePromises.push(application.save());
-      console.log("Promise saved!");
+
+      if (!appEntities.some(e => e.name === application.name)) {
+        appEntities.push(application);
+      }
     }
 
-    return Promise.all(savePromises);
+    return getRepository(Application).save(appEntities);
   };
 }
 
