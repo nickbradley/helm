@@ -2,7 +2,8 @@
   <div>
     <div class="inner-addon">
       <label>
-        <v-icon name="search"/>
+        <v-icon v-if="searching" name="spinner" spin/>
+        <v-icon v-else name="search"/>
         <input type="text" autofocus class="input" v-model="searchTerm" v-on:keyup.enter="onEnter"/>
       </label>
     </div>
@@ -40,13 +41,14 @@
         searchResults: [],
         activeItem: {},
         partialSearch: null,
-        inputTimer: null
+        inputTimer: null,
+        searching: false
       };
     },
     watch: {
       searchTerm: function() {
         const that: any = this;
-
+        this.searching = true;
         that.partialSearch = that.searchTerm;
         if (that.inputTimer) {
           clearTimeout(that.inputTimer);
@@ -55,7 +57,7 @@
         that.inputTimer = setTimeout(() => {
           if (that.partialSearch === that.searchTerm) {
             //Search term has stabilized here
-            ipcRenderer.sendTo(that.backgroundWindowId, "search", that.searchTerm);
+            this.search();
           }
         }, 250);
 
@@ -64,9 +66,11 @@
     },
     mounted() {
       // Get the initial list of results (TODO This doesn't work)
-      ipcRenderer.sendTo((this as any).backgroundWindowId, "search", (this as any).searchTerm);
+      this.search();
       ipcRenderer.on("search-results", (event: any, arg: any) => {
+        this.searching = false;
         (this as any).searchResults = arg;
+
       });
     },
     methods: {
@@ -85,6 +89,9 @@
         // clear the input timer
         // make the search
         // focus the results (once they arrive)
+      },
+      search() {
+        ipcRenderer.sendTo((this as any).backgroundWindowId, "search", (this as any).searchTerm);
       }
     },
     computed: {
@@ -159,11 +166,14 @@
 
   label > .fa-icon {
     position: absolute;
-    top: 50%;
+    top: 0;
+    bottom: 0;
     left: 1em;
-    transform: translateY(-50%);
+    /*transform: translateY(-50%);*/
+    margin:auto;
     color: #e5e5ea;
   }
+
 
   label > input {
     padding-left: calc(1.6em + 1em + 2px); /* icon width + icon padding-left + desired separation*/
