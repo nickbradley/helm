@@ -81,7 +81,7 @@ const createTray = () => {
   console.log("Creating tray");
   // const assestPath = path.join(staticPath, '/static').replace(/\\/g, '\\\\');
   console.log("staticPath", staticPath);
-  tray = new Tray(path.join(staticPath, "/helm_16.png"));
+  tray = new Tray(path.join(staticPath, "/helm_128.png"));
   const contextMenu = Menu.buildFromTemplate([
     {
       label: "Show/Hide",

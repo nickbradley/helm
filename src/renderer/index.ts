@@ -2,6 +2,9 @@ import Log from "../backend/Log";
 
 import Vue from "vue";
 import * as AsyncComputed from "vue-async-computed";
+// import all icons (use vue-awesome/icons/ICON_NAME to import specific icons)
+import 'vue-awesome/icons'
+import Icon from "vue-awesome/components/Icon.vue";
 import * as fs from "fs";
 import * as path from "path";
 import { remote } from "electron";
@@ -13,6 +16,7 @@ function renderUI() {
   Log.info(`Starting Vue...`);
 
   Vue.use(AsyncComputed as any);
+  Vue.component('v-icon', Icon);
 
   new Vue({
     el: "#app",
