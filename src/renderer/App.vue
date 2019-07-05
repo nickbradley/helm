@@ -25,7 +25,8 @@
   import WindowPreview from "./components/previews/WindowPreview.vue";
   import UrlPreview from "./components/previews/UrlPreview.vue";
   import ShellPreview from "./components/previews/ShellPreview.vue";
-  import { ipcRenderer } from "electron";
+  import { ipcRenderer, shell } from "electron";
+  import { Platform } from "../common/Platform";
 
   export default {
     name: "App",
@@ -90,8 +91,30 @@
         console.log("WindowAccelerator::onActive() - ", item);
         (this as any).activeItem = item;
       },
-      onTrigger(window: any) {
+      onTrigger(item: any) {
         console.log("WindowAccelerator::onTrigger() - ", window);
+        switch ((this as any).activeItem.group) {
+          case "file":
+            console.log("FILE TRIGGERED", item);
+            // description, group, icon, relevance, title, path
+            shell.showItemInFolder(item.path);
+            break;
+          case "window":
+            console.log("WINDOW TRIGGERED", item);
+            // description, group, icon, relevance, title
+            Platform.activateWindow(item.title);
+            break;
+          case "website":
+            console.log("WEBSITE TRIGGERED", item);
+            // description, group, icon, relevance, title, url
+            shell.openExternal(item.url);
+            break;
+          case "shell session":
+            console.log("SHELL TRIGGERED", item);
+            // description, group, icon, relevance, title, commands: cmd, code, cwd, duration, isSelected
+            // TODO
+            break;
+        }
       },
       onEnter() {
         // clear the input timer

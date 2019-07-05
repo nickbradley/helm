@@ -7,7 +7,8 @@ export class ContextModel {
   
   constructor() {
     this.project = "";
-    this.projectsDir = "/Users/studyparticipant/projects";
+    // this.projectsDir = "/Users/studyparticipant/projects";
+    this.projectsDir = "/home/ncbradley/do";
   }
   
   public async search(opts: {searchTerm: string, project: string}) {
@@ -188,7 +189,7 @@ export class ContextModel {
       icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHnSURBVHhe7dK9ShxhGIbhPWTPwEMwTVqLQKp0OQcbCUhIJaSxsUkdUGNcd+L6s2bHX4R17uuBu5riY16umZmZmZmZmZnZa7azf/L5w/7pvNHJ9vK37XotAEMQrKwHYAiCmzUBDEHwb1MH8PXn+fzjt/XfIFhs6gD2js/nB7/+QjC2AoCj3xcQjK0CAIKRlQBAsGY1ABDcWxEABHdWBTAEwWJlAEN5BHUAQ2kEAFyVRQDAbUkEAKyWQwDA/6UQALC+DAIAxksgAODhJo8AgMebNAIAntZkEQDw9CaJAIDnNTkEADy/SSEA4GU9hGBx063leTd/ALy8MQTDTZfn3fwB8LrWIQBgg/r042z+5fDPm7b7/WzlTQDiARAPgHgAxAMgHgDxAIgHQDwA4gEQD4B4AMQDIB4A8QCIB0A8AOIBEA+AeADEAyAeAPEAiAdAPADiARAPgHgAxAMgHgDxAIgHQDwA4gEQD4B4AMQDIB4A8QCIB0A8AOIBEA+AeADEAyAeAPEAiAdAPADiARAPgHgAxAMgHgDxAIgHQDwA4gEQD4B4AMQDIB4A8QCIB0A8AOIBEA+AeADEAyAeAPEAiAdAPADiARAPgHgAxAMgHgDxAIgHQDwA4gEQ710BMDMzMzMzM7MN3Gx2Cb0ns/Dvyu+lAAAAAElFTkSuQmCC",
       title: r.file,
       description: "",
-      path: `${this.projectsDir}/${r.file}`,
+      path: `${this.projectsDir}/${this.project}/${r.file}`,
       relevance: r.relevance,
       group: "file"
     }));
