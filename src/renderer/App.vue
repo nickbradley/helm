@@ -4,9 +4,13 @@
       <label>
         <v-icon v-if="searching" name="spinner" spin/>
         <v-icon v-else name="search"/>
+        <select id="select-project" v-model="project">
+          <option v-for="project in projects" v-bind:value="project">{{project}}</option>
+        </select>
         <input type="text" autofocus class="input" v-model="searchTerm" v-on:keyup.enter="onEnter"/>
       </label>
-    </div>
+
+  </div>
     <div class="wrapper">
       <GroupedList class="list-pane" v-on:active="onActive" v-on:trigger="onTrigger"
                    v-bind:items="searchResults"></GroupedList>
@@ -42,7 +46,9 @@
         activeItem: {},
         partialSearch: null,
         inputTimer: null,
-        searching: false
+        searching: false,
+        projects: ["kanboard", "teammates", "helm"],
+        project: "kanboard"
       };
     },
     watch: {
@@ -60,8 +66,10 @@
             this.search();
           }
         }, 250);
-
-
+      },
+      project: function() {
+        this.searching = true;
+        this.search();
       }
     },
     mounted() {
@@ -91,7 +99,7 @@
         // focus the results (once they arrive)
       },
       search() {
-        ipcRenderer.sendTo((this as any).backgroundWindowId, "search", (this as any).searchTerm);
+        ipcRenderer.sendTo((this as any).backgroundWindowId, "search", {searchTerm: (this as any).searchTerm, project:this.project});
       }
     },
     computed: {
@@ -172,7 +180,19 @@
     left: 1em;
     /*transform: translateY(-50%);*/
     margin:auto;
-    color: #e5e5ea;
+    /*color: #e5e5ea;*/
+    color: lightgray            ;
+  }
+
+  label > select {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 8em;;
+    right: 8em;
+    margin: auto;
+    background: none;
+    color: gray;
   }
 
 

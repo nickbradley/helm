@@ -1,6 +1,5 @@
 import { getManager } from "typeorm";
 import { Platform } from "../common/Platform";
-import { Editor } from "./entities/Editor";
 
 export class ContextModel {
   public project: string;
@@ -11,15 +10,11 @@ export class ContextModel {
     this.projectsDir = "/Users/studyparticipant/projects";
   }
   
-  public async search(term: string) {
+  public async search(opts: {searchTerm: string, project: string}) {
+    this.project = opts.project;
+    const term = opts.searchTerm;
     const entityManager = getManager();
     const openWindowTitles = Platform.listWindows().map(w => w.title.substring(0, 50).toLowerCase());
-    try {
-      const latest = await Editor.findOneOrFail({ order: { created: "DESC" } });
-      this.project = latest.project;
-    } catch (err) {
-      // do nothing
-    }
 
     // const windowResults = (await createQueryBuilder(Window)
     //   .innerJoin(ProjectSession, "ses", "window.created between ses.start and ses.end and ses.project = :project", {project: activeProject})
