@@ -32,7 +32,6 @@ async function startBackground() {
   let config: {[key: string]: any};
   const configFile = path.join(remote.app.getPath("userData"), "helmconfig.json");
   const dbPath = path.join(remote.app.getPath("userData"), "helm.db");
-  console.log("*** DATABASE ***", dbPath);
 
   try {
     Log.info(`Reading config file from ${configFile}`);

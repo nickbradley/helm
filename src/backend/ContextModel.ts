@@ -7,8 +7,8 @@ export class ContextModel {
   
   constructor() {
     this.project = "";
-    // this.projectsDir = "/Users/studyparticipant/projects";
-    this.projectsDir = "/home/ncbradley/do";
+    this.projectsDir = "/Users/studyparticipant/projects";
+    // this.projectsDir = "/home/ncbradley/do";
   }
   
   public async search(opts: {searchTerm: string, project: string}) {

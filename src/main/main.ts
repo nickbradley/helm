@@ -1,16 +1,17 @@
-import { app, BrowserWindow, globalShortcut, Menu, Tray, screen, ipcMain } from "electron";
+import { app, BrowserWindow, dialog, globalShortcut, Menu, MenuItem, Tray, screen, shell, ipcMain } from "electron";
 // import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { format as formatUrl } from "url";
+import { ChildProcess, spawn } from "child_process";
 // import { Server } from "./Server";
 // import { Application } from "../common/entities/Application";
 // import { Platform } from "../common/Platform";
 // import { DB } from "../common/DB";
 import "reflect-metadata";
 import Log from "electron-log";
+// import MenuItem = Electron.MenuItem;
 // import { ObjectLiteral } from "typeorm";
-
 
 declare const __static: string;
 const isDevelopment = process.env.NODE_ENV !== "production";
@@ -32,6 +33,10 @@ Log.transports.file.fileName = `${app.getName()}.log`;
 let tray: Tray;
 let mainWindow: BrowserWindow;
 let backgroundWindow: BrowserWindow;
+
+let trayMenu: Menu;
+
+let captureProc: ChildProcess;
 
 switch (os.platform()) {
   case "darwin":
@@ -78,61 +83,61 @@ app.on("ready", async () => {
 
 // @ts-ignore
 const createTray = () => {
-  console.log("Creating tray");
   // const assestPath = path.join(staticPath, '/static').replace(/\\/g, '\\\\');
   console.log("staticPath", staticPath);
   tray = new Tray(path.join(staticPath, "/helm_128.png"));
-  const contextMenu = Menu.buildFromTemplate([
+  trayMenu = Menu.buildFromTemplate([
     {
-      label: "Show/Hide",
+      id: "show-ui",
+      label: "Show launcher",
       click() {
-        toggleWindow();
+        showWindow();
       }
     },
     {
-      label: "Show DB file",
-      click() {
-        // shell.showItemInFolder(DB.path);
-      }
+      id: "hide-ui",
+      label: "Hide launcher",
+      visible: false,
+      click(me: MenuItem) {
+        hideWindow();
+      },
     },
     {
       type: "separator"
     },
     {
-      label: "Dev Tools",
-      click() {
-        mainWindow.webContents.openDevTools({ mode: "detach" });
-        backgroundWindow.webContents.openDevTools({ mode: "detach" });
-      }
+      id: "show-db",
+      label: "Show database file",
+      click() { shell.showItemInFolder(""); }
+    },
+    {
+      id: "start-recording",
+      label: "Start recording",
+      click() { startRecording(); }
+    },
+    {
+      id: "stop-recording",
+      label: "Stop recording",
+      visible: false,
+      click() { stopRecording(); }
+    },
+    {
+      id: "extract-clips",
+      label: "Extract study clips",
+      click() { extractClips(); }
     },
     {
       type: "separator"
-    }, {
+    },
+    {
       label: "Exit",
       click() {
         app.quit();
       }
     }
-
   ]);
-
-  tray.setToolTip("This is my application.");
-  tray.setContextMenu(contextMenu);
-
-  tray.on("right-click", toggleWindow);
-  tray.on("double-click", () => {
-    console.log("tray dbl clicked");
-    toggleWindow();
-  });
-  tray.on("click", (event: any) => {
-    // console.log("Event is ", event);
-    // console.log("event.metakey", event.metaKey);
-    toggleWindow();
-    // // Show devtools when command clicked
-    // if (mainWindow.isVisible()) { // && event.metaKey) {
-    //   mainWindow.webContents.openDevTools({ mode: "detach" });
-    // }
-  });
+  tray.setToolTip("Helm Launcher");
+  tray.setContextMenu(trayMenu);
 };
 
 const getWindowPosition = () => {
@@ -230,9 +235,81 @@ const showWindow = () => {
   globalShortcut.register("Escape", () => {
     hideWindow();
   });
+
+  // Update tray menu
+  trayMenu.getMenuItemById("show-ui").visible = false;
+  trayMenu.getMenuItemById("hide-ui").visible = true;
 };
 
 const hideWindow = () => {
   globalShortcut.unregister("Escape");
   mainWindow.hide();
+
+  // Update tray menu
+  trayMenu.getMenuItemById("show-ui").visible = true;
+  trayMenu.getMenuItemById("hide-ui").visible = false;
 };
+
+const startRecording = () => {
+  const outputFile = "helm-screencapture.mkv";
+  const screenIndex = "1";  // you can see the options with: ffmpeg -f avfoundation -list_devices true -i ""
+  const ffmpegOpts = [
+    "-y",
+    "-f", "avfoundation",
+    "-i", `${screenIndex}:none`,  // video_device_index:audio_device_index
+    "-capture_cursor", "1",
+    "-capture_mouse_clicks", "1",
+    "-vcodec", "hevc_videotoolbox",  // apparently this codec sucks but is the only way to do hardware encoding on MacOS
+    "-b:v", "6000k",
+    "-tag:v", "hvc1",
+    "-profile:v", "main10",
+    path.join(process.env["HOME"] || "", outputFile)
+  ];
+  // console.log("CMD", "ffmpeg", ffmpegOpts.join(" "));
+
+  /*
+  ffmpeg -f avfoundation -i "1" test.mpeg
+
+  // https://ffmpeg.org/ffmpeg-devices.html#avfoundation
+  ffmpeg -f avfoundation  -pixel_format yuv420p -capture_cursor 1 -capture_mouse_clicks 1 -framerate 25 -i "1:none" -b:v 8000k -c:v hevc_videotoolbox -profile:v main10 -crf 0 -preset ultrafast test.mkv
+  ffmpeg -f avfoundation -i "1" -c:v hevc_videotoolbox  -crf 0 test.mkv
+  ffmpeg -f avfoundation -pixel_format bgr0 -i "1:none"  -c:v hevc_videotoolbox  -crf 0 -preset ultrafast test.mkv
+
+  yuv420p
+   */
+
+  captureProc = spawn("ffmpeg", ffmpegOpts, { stdio: ["pipe", "ignore", "ignore"] });
+
+  // const out = fs.createWriteStream(path.join(process.env["HOME"] || "", "helm-ffmpeg.log"));
+  // captureProc.stdout!.pipe(out);
+  // captureProc.stderr!.pipe(out);
+
+  captureProc.on("error", (err) => {
+    Log.error(err);
+    stopRecording();
+  });
+
+  captureProc.on("close", (code: number) => {
+    if (code !== 0) {
+      dialog.showErrorBox("Recording Failed","ffmpeg exited with a non-zero exit code.");
+    }
+
+    trayMenu.getMenuItemById("start-recording").visible = true;
+    trayMenu.getMenuItemById("stop-recording").visible = false;
+  });
+
+  // Update tray menu
+  trayMenu.getMenuItemById("start-recording").visible = false;
+  trayMenu.getMenuItemById("stop-recording").visible = true;
+};
+
+const stopRecording = () => {
+  if (captureProc && captureProc.stdin) {
+    captureProc.stdin.write("q");
+  }
+};
+
+const extractClips = () => {
+
+};
+
