@@ -55,7 +55,7 @@
     watch: {
       searchTerm: function() {
         const that: any = this;
-        this.searching = true;
+        (this as any).searching = true;
         that.partialSearch = that.searchTerm;
         if (that.inputTimer) {
           clearTimeout(that.inputTimer);
@@ -64,20 +64,20 @@
         that.inputTimer = setTimeout(() => {
           if (that.partialSearch === that.searchTerm) {
             //Search term has stabilized here
-            this.search();
+            (this as any).search();
           }
         }, 250);
       },
       project: function() {
-        this.searching = true;
-        this.search();
+        (this as any).searching = true;
+        (this as any).search();
       }
     },
     mounted() {
       // Get the initial list of results (TODO This doesn't work)
-      this.search();
+      (this as any).search();
       ipcRenderer.on("search-results", (event: any, arg: any) => {
-        this.searching = false;
+        (this as any).searching = false;
         (this as any).searchResults = arg;
 
       });
@@ -122,7 +122,7 @@
         // focus the results (once they arrive)
       },
       search() {
-        ipcRenderer.sendTo((this as any).backgroundWindowId, "search", {searchTerm: (this as any).searchTerm, project:this.project});
+        ipcRenderer.sendTo((this as any).backgroundWindowId, "search", {searchTerm: (this as any).searchTerm, project: (this as any).project});
       }
     },
     computed: {
