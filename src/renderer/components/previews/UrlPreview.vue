@@ -1,5 +1,5 @@
 <template>
-  <webview v-bind:src="item.url"></webview>
+  <webview v-bind:src="item.url" tabindex="-1"></webview>
 </template>
 
 <script>
