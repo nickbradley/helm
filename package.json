@@ -6,6 +6,8 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
+    "@types/common-tags": "^1.8.0",
+    "common-tags": "^1.8.0",
     "desktop-native": "https://github.com/nickbradley/desktop-native.git",
     "electron-log": "^3.0.5",
     "reflect-metadata": "^0.1.13",

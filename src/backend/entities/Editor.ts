@@ -3,6 +3,8 @@ import { Tracker } from "./Tracker";
 
 @Entity()
 export class Editor extends BaseEntity {
+  private _project: string = "";
+
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -16,7 +18,11 @@ export class Editor extends BaseEntity {
   file: string = "";
 
   @Column("text")
-  project: string = "";
+  public get project(): string { return this._project; }
+  public set project(p: string) {
+    // VSCode includes the full path to the project. Make it consistent with IntelliJ.
+    this._project = p.split("/").pop() as string;
+  }
 
   @Column("text")
   language: string = "";

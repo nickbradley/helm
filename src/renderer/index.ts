@@ -2,10 +2,8 @@ import Log from "../backend/Log";
 
 import Vue from "vue";
 import * as AsyncComputed from "vue-async-computed";
-// import all icons (use vue-awesome/icons/ICON_NAME to import specific icons)
-import 'vue-awesome/icons'
+import "vue-awesome/icons" // import all icons (use vue-awesome/icons/ICON_NAME to import specific icons)
 import Icon from "vue-awesome/components/Icon.vue";
-import * as fs from "fs";
 import * as path from "path";
 import { remote } from "electron";
 import App from "./App.vue";
@@ -29,19 +27,8 @@ function renderUI() {
 async function startBackground() {
   Log.info("Starting helm daemon process...");
 
-  let config: {[key: string]: any};
   const configFile = path.join(remote.app.getPath("userData"), "helmconfig.json");
-  const dbPath = path.join(remote.app.getPath("userData"), "helm.db");
-
-  try {
-    Log.info(`Reading config file from ${configFile}`);
-    config = JSON.parse(fs.readFileSync(configFile, "utf8"));
-  } catch (err) {
-    Log.error(`<FATAL> Failed to read ${configFile}. Please ensure the file exists and is valid JSON.`);
-    return;
-  }
-
-  const daemon = new Daemon(5600, dbPath, config["awPath"]);
+  const daemon = new Daemon(configFile);
   await daemon.start();
 
   window.addEventListener("unload", async () => {

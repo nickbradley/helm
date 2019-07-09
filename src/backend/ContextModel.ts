@@ -3,15 +3,20 @@ import { Platform } from "../common/Platform";
 
 export class ContextModel {
   public project: string;
-  public projectsDir: string;
+  public projects: {[project: string]: {[attr: string]: any}};
   
-  constructor() {
+  constructor(projects: {[project: string]: {}}) {
     this.project = "";
-    this.projectsDir = "/Users/studyparticipant/projects";
-    // this.projectsDir = "/home/ncbradley/do";
+    this.projects = {
+      helm: { root: "/Users/ncbrad/do/helm" }
+    };
   }
   
   public async search(opts: {searchTerm: string, project: string}) {
+    if (opts.project && !Object.keys(this.projects).includes(opts.project)) {
+      throw new Error(`Project ${opts.project} is not defined in the config file.`);
+    }
+
     this.project = opts.project;
     const term = opts.searchTerm;
     const entityManager = getManager();
@@ -163,24 +168,27 @@ export class ContextModel {
     const fileRawResults = await entityManager.query(`
         with grouped as (
           select file,
+                 trackerId,
                  count(*)      as frequency,
                  max(created)  as recency,
                  sum(duration) as duration
           from editor
                  join project_session ses on editor.created between ses.start and ses.end and ses.project = ?
           where file like ?
-          group by file
+          group by file, trackerId
         ),
              stats as (
                select file,
+                      trackerId,
                       percent_rank() over (order by frequency) as frequency_rank,
                       percent_rank() over (order by recency)   as recency_rank,
                       percent_rank() over (order by duration)  as duration_rank
                from grouped
              )
-        select file,
+        select file, tracker.client as client,
                0.8 * recency_rank + 0.15 * frequency_rank + 0.05 * duration_rank as relevance
         from stats
+        left join tracker on tracker.id = stats.trackerId
         order by 0.8 * recency_rank + 0.15 * frequency_rank + 0.05 * duration_rank desc
         limit 10;
         `, [this.project, `%${term}%`]);
@@ -189,9 +197,14 @@ export class ContextModel {
       icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAHnSURBVHhe7dK9ShxhGIbhPWTPwEMwTVqLQKp0OQcbCUhIJaSxsUkdUGNcd+L6s2bHX4R17uuBu5riY16umZmZmZmZmZnZa7azf/L5w/7pvNHJ9vK37XotAEMQrKwHYAiCmzUBDEHwb1MH8PXn+fzjt/XfIFhs6gD2js/nB7/+QjC2AoCj3xcQjK0CAIKRlQBAsGY1ABDcWxEABHdWBTAEwWJlAEN5BHUAQ2kEAFyVRQDAbUkEAKyWQwDA/6UQALC+DAIAxksgAODhJo8AgMebNAIAntZkEQDw9CaJAIDnNTkEADy/SSEA4GU9hGBx063leTd/ALy8MQTDTZfn3fwB8LrWIQBgg/r042z+5fDPm7b7/WzlTQDiARAPgHgAxAMgHgDxAIgHQDwA4gEQD4B4AMQDIB4A8QCIB0A8AOIBEA+AeADEAyAeAPEAiAdAPADiARAPgHgAxAMgHgDxAIgHQDwA4gEQD4B4AMQDIB4A8QCIB0A8AOIBEA+AeADEAyAeAPEAiAdAPADiARAPgHgAxAMgHgDxAIgHQDwA4gEQD4B4AMQDIB4A8QCIB0A8AOIBEA+AeADEAyAeAPEAiAdAPADiARAPgHgAxAMgHgDxAIgHQDwA4gEQ710BMDMzMzMzM7MN3Gx2Cb0ns/Dvyu+lAAAAAElFTkSuQmCC",
       title: r.file,
       description: "",
-      path: `${this.projectsDir}/${this.project}/${r.file}`,
+      path: `${this.projects[this.project].root}/${r.file}`,
       relevance: r.relevance,
-      group: "file"
+      group: "file",
+      custom: {
+        tracker: r.client,
+        project: this.projects[this.project].root,
+        file: r.file
+      }
     }));
 
     // const shellRawResults = await createQueryBuilder(Shell)

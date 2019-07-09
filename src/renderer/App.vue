@@ -27,6 +27,9 @@
   import ShellPreview from "./components/previews/ShellPreview.vue";
   import { ipcRenderer, shell } from "electron";
   import { Platform } from "../common/Platform";
+  import { ChildProcess, spawn } from "child_process";
+  import * as fs from "fs";
+  import { stripIndent } from "common-tags";
 
   export default {
     name: "App",
@@ -49,7 +52,7 @@
         inputTimer: null,
         searching: false,
         projects: ["kanboard", "teammates", "helm"],
-        project: "kanboard"
+        project: "helm"
       };
     },
     watch: {
@@ -97,7 +100,28 @@
           case "file":
             console.log("FILE TRIGGERED", item);
             // description, group, icon, relevance, title, path
-            shell.showItemInFolder(item.path);
+
+            let tracker = "unknown";
+            if (item.custom && item.custom.tracker) {
+              tracker = item.custom.tracker;
+            }
+
+            let subprocess: ChildProcess | undefined;
+            switch (tracker) {
+              case "aw-watcher-idea":
+                  subprocess = spawn("idea", [item.path], { detached: true, stdio: "ignore" });
+                break;
+              case "aw-watcher-vscode":
+                // VS Code needs the path split into project and file to open as desired.
+                subprocess = spawn("code", [item.custom.project, item.custom.file], { detached: true, stdio: "ignore"});
+                break;
+              default:
+                shell.showItemInFolder(item.path);
+            }
+
+            if (subprocess) {
+              subprocess.unref();
+            }
             break;
           case "window":
             console.log("WINDOW TRIGGERED", item);
@@ -112,7 +136,30 @@
           case "shell session":
             console.log("SHELL TRIGGERED", item);
             // description, group, icon, relevance, title, commands: cmd, code, cwd, duration, isSelected
-            // TODO
+
+            const scriptPath = `/tmp/${Date.now()}`;
+
+            let cwd: string = "";
+            const commands: string[] = [];
+            const selectedCommands = item.commands.filter((command: any) => command.isSelected);
+            for (const command of selectedCommands) {
+              if (command.cwd !== cwd) {
+                commands.push(`cd ${command.cwd}`);
+                cwd = command.cwd;
+              }
+              commands.push(command.cmd);
+            }
+
+            const script = stripIndent`
+            #!/bin/bash
+            set -x
+            ${commands.join(" && ")}
+            `;
+
+            fs.writeFile(scriptPath, script, {mode: 0o544}, (err) => {
+              spawn("open", ["-a", "Terminal", scriptPath], { detached: true, stdio: "ignore" }).unref();
+            });
+
             break;
         }
       },

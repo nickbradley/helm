@@ -220,10 +220,7 @@ const createWindow = () => {
   };
   mainWindow = new BrowserWindow(isDevelopment ? devBrowserWindow : prodBrowserWindow);
   backgroundWindow = new BrowserWindow({ show: false });
-  if (isDevelopment) {
-    mainWindow.webContents.openDevTools();
-    backgroundWindow.webContents.openDevTools();
-  }
+
   const bgWindowId = backgroundWindow.webContents.id;
 
   if (isDevelopment) {
@@ -256,6 +253,27 @@ const createWindow = () => {
       mainWindow.hide();
     }
   });
+
+  if (isDevelopment) {
+    mainWindow.webContents.on("did-frame-finish-load", () => {
+      mainWindow.webContents.openDevTools();
+      mainWindow.webContents.on("devtools-opened", () => {
+        mainWindow.focus();
+      });
+    });
+    backgroundWindow.webContents.on("did-frame-finish-load", () => {
+      backgroundWindow.webContents.openDevTools();
+      backgroundWindow.webContents.on("devtools-opened", () => {
+        mainWindow.focus();
+      });
+    });
+  }
+
+
+  if (isDevelopment) {
+    mainWindow.webContents.openDevTools();
+    backgroundWindow.webContents.openDevTools();
+  }
 };
 
 const toggleWindow = () => {

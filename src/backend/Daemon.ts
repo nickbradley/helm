@@ -12,6 +12,7 @@ import { Application } from "./entities/Application";
 import { ContextModel } from "./ContextModel";
 import {ipcRenderer} from "electron";
 import { getRepository } from "typeorm";
+import * as fs from "fs";
 
 export class Daemon {
   public readonly restPort: number;
@@ -26,15 +27,24 @@ export class Daemon {
 
   private canCollectData: boolean;
 
-  constructor(restPort: number, dbPath: string, awPath: string) {
+  constructor(configFile: string) {
     Log.info(`Daemon::init() - Initializing process.`);
 
-    this.restPort = restPort;
-    this.dbPath = dbPath;
-    this.awPath = awPath;
+    let config: {[key: string]: any};
+    try {
+      Log.info(`Reading config file from ${configFile}`);
+      config = JSON.parse(fs.readFileSync(configFile, "utf8"));
+    } catch (err) {
+      Log.error(`<FATAL> Failed to read ${configFile}. Please ensure the file exists and is valid JSON.`);
+      throw err;
+    }
+
+    this.restPort = 5600;
+    this.dbPath = config["dbPath"];  // /Users/ncbrad/Library/Application Support/helm-dev/helm.db
+    this.awPath = config["awPath"];
 
     this.db = new Database(this.dbPath);
-    this.model = new ContextModel();
+    this.model = new ContextModel(config["projects"]);
     this.server = new Server("HelmWatcher");
 
     this.canCollectData = true;
@@ -49,7 +59,8 @@ export class Daemon {
     await this.db.connect();
 
     Log.info(`Daemon::start() - Getting information about installed applications.`);
-    await this.loadHostApplications();
+    // TODO This is still causing exceptions at startup!
+    // await this.loadHostApplications();
 
     Log.info(`Daemon::start() - Starting ActivityWatch-compatible REST server.`);
     await this.server.start(this.restPort);
