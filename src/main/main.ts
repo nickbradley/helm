@@ -1,15 +1,33 @@
-import { app, BrowserWindow, dialog, globalShortcut, Menu, MenuItem, Tray, screen, shell, ipcMain } from "electron";
-// import * as fs from "fs";
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  globalShortcut,
+  Menu,
+  MenuItem,
+  Tray,
+  screen,
+  shell,
+  ipcMain,
+} from "electron";
+import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { format as formatUrl } from "url";
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess, spawn,
+  execFile
+} from "child_process";
+// import { Database } from "../backend/D¡atabase";
+// import * as toCSV from "csv-stringify¡"
+
 // import { Server } from "./Server";
 // import { Application } from "../common/entities/Application";
 // import { Platform } from "../common/Platform";
 // import { DB } from "../common/DB";
 import "reflect-metadata";
 import Log from "electron-log";
+// import { Browser } from "../backend/entities/Browser";
+// import { Shell } from "../backend/entities/Shell";
 // import MenuItem = Electron.MenuItem;
 // import { ObjectLiteral } from "typeorm";
 
@@ -29,6 +47,25 @@ if (isDevelopment) {
 // Configure logging
 Log.transports.file.fileName = `${app.getName()}.log`;
 
+// This is also defined in index.ts
+const dbPath = path.join(app.getPath("userData"), "helm.db");
+// const db = new Database(dbPath);
+
+const studyDir = path.join(process.env["HOME"] || "", "/study");
+try {
+  fs.mkdirSync(studyDir);
+  console.log(`Created study directory: ${studyDir}`);
+} catch (err) {
+  if (isDevelopment && err.code === "EEXIST") {
+    console.warn("Study directory already exists. Some files might get overwritten.");
+  } else {
+    throw err;
+  }
+}
+
+
+
+const screenRecordingFile = path.join(studyDir, "helm-screencapture.mkv");
 
 let tray: Tray;
 let mainWindow: BrowserWindow;
@@ -37,6 +74,8 @@ let backgroundWindow: BrowserWindow;
 let trayMenu: Menu;
 
 let captureProc: ChildProcess;
+let captureStartTimestamp: number;
+let captureEndTimestamp: number = 0;
 
 switch (os.platform()) {
   case "darwin":
@@ -251,7 +290,6 @@ const hideWindow = () => {
 };
 
 const startRecording = () => {
-  const outputFile = "helm-screencapture.mkv";
   const screenIndex = "1";  // you can see the options with: ffmpeg -f avfoundation -list_devices true -i ""
   const ffmpegOpts = [
     "-y",
@@ -263,7 +301,7 @@ const startRecording = () => {
     "-b:v", "6000k",
     "-tag:v", "hvc1",
     "-profile:v", "main10",
-    path.join(process.env["HOME"] || "", outputFile)
+    screenRecordingFile
   ];
   // console.log("CMD", "ffmpeg", ffmpegOpts.join(" "));
 
@@ -294,6 +332,7 @@ const startRecording = () => {
       dialog.showErrorBox("Recording Failed","ffmpeg exited with a non-zero exit code.");
     }
 
+    captureEndTimestamp = Date.now();
     trayMenu.getMenuItemById("start-recording").visible = true;
     trayMenu.getMenuItemById("stop-recording").visible = false;
   });
@@ -309,7 +348,55 @@ const stopRecording = () => {
   }
 };
 
-const extractClips = () => {
+function msToTime(duration: number) {
+  const seconds = Math.floor((duration / 1000) % 60);
+  const minutes = Math.floor((duration / (1000 * 60)) % 60);
+  const hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+}
+
+const extractClips = async () => {
+  const scriptPath = "/Users/ncbrad/Public/helm-study/extract-clips.R";
+
+
+  execFile(scriptPath, [dbPath], (error, stdout, stderr) => {
+    if (error) {
+      dialog.showErrorBox("Extracting Clips Failed",`Encountered error when trying to extract clips: ${error.message}`);
+    }
+
+    // Get the video start time to use when computing clip offsets
+    captureStartTimestamp = fs.statSync(screenRecordingFile).birthtimeMs;
+    const duration = captureEndTimestamp - captureStartTimestamp;
+
+    const seekLeadTime = 3000;  // 3s
+    const clipDuration = 8;  // sec
+
+    const records = stdout.trim().split("\n");
+    for (let i = 1; i < records.length; i += 1) {
+      const record = records[i].split(",");
+      const type = JSON.parse(record[0]);
+      const tool = JSON.parse(record[1]);
+      const timestamp = new Date(record[2]).getTime();
+
+      // It's possible that the trackers could be running for a bit before the screen recording starts so we don't to
+      // include those. Same for timestamps after the recording has ended.
+      if (timestamp >= (captureStartTimestamp + seekLeadTime) && timestamp < duration) {
+        const outfile = path.join(studyDir, `${tool}-${type}-clip-${i}.mkv`);
+        console.log(`Extracting clip to ${outfile}`);
+
+        spawn("ffmpeg", [
+          "-y",
+          "-i", screenRecordingFile,
+          "-ss", msToTime(timestamp - seekLeadTime - captureStartTimestamp),
+          "-t", clipDuration.toString(),
+          "-c", "copy",
+          outfile
+        ]);
+      }
+    }
+  });
+
 
 };
 
