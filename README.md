@@ -18,4 +18,4 @@ to clone my forked version of the project.
 3. Make sure you can [open a file from the command line in VS Code](https://code.visualstudio.com/docs/setup/mac#_launching-from-the-command-line)
 
 ## Bibliography
-- search bar by Lucid Formation from the Noun Project
+- search bar by un·delivered from the Noun Project
