@@ -3,12 +3,41 @@ import { ViewEntity, ViewColumn } from "typeorm";
 @ViewEntity({
   expression: `
     with recursive
+    detected as (
+      select project,
+             created,
+             duration
+      from editor
+      
+      union all
+      
+      select case 
+                 when url like '%kanboard%' then 'kanboard'
+                 when url like '%teammates%' then 'teammates'
+                 else null end as project,
+             created,
+             duration
+      from browser
+      where url like 'https://github.com/%/kanboard%'
+         or url like 'https://github.com/%/teammates%'
+         
+      union all
+      
+      select case
+                 when cwd like '%kanboard%' then 'kanboard'
+                 when cwd like '%teammates%' then 'teammates'
+                 else null end as project,
+             created,
+             duration
+      from shell
+      where cwd like '%kanboard%' or cwd like '%teammates%'
+    ),
     numbered as (
       select row_number() over (order by created) as rn,
              project,
              created,
              duration
-      from editor
+      from detected
       ),
     project_session as (
       select 1 as session,

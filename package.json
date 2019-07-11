@@ -70,7 +70,10 @@
   "build": {
     "mac": {
       "category": "public.app-category.productivity",
-      "icon": "icons/png"
+      "icon": "icons/png",
+      "extendInfo": {
+        "LSUIElement": 1
+      }
     },
     "linux": {
       "target": "pacman"
