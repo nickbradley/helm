@@ -124,7 +124,8 @@ app.on("ready", async () => {
 const createTray = () => {
   // const assestPath = path.join(staticPath, '/static').replace(/\\/g, '\\\\');
   console.log("staticPath", staticPath);
-  tray = new Tray(path.join(staticPath, "/helm_128.png"));
+  tray = new Tray(path.join(staticPath, "/status.png"));
+  tray.setPressedImage(path.join(staticPath, "/status-white.png"));
   trayMenu = Menu.buildFromTemplate([
     {
       id: "show-ui",
