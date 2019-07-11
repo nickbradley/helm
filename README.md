@@ -19,3 +19,4 @@ to clone my forked version of the project.
 
 ## Bibliography
 - search bar by un·delivered from the Noun Project
+- helm by Olena Panasovska from the Noun Project
