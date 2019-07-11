@@ -51,8 +51,8 @@
         partialSearch: null,
         inputTimer: null,
         searching: false,
-        projects: ["kanboard", "teammates", "helm"],
-        project: "helm"
+        projects: ["kanboard", "teammates"],
+        project: "kanboard"
       };
     },
     watch: {
