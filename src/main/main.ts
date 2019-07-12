@@ -388,8 +388,10 @@ const extractClips = async () => {
     captureStartTimestamp = fs.statSync(screenRecordingFile).birthtimeMs;
     const duration = captureEndTimestamp - captureStartTimestamp;
 
-    const seekLeadTime = 3000;  // 3s
-    const clipDuration = 8;  // sec
+    const thrashSeekLeadTime = 3000;  // 3s
+    const thrashClipDuration = 8;  // sec
+    const initSeekLeadTime = 20000;
+    const initClipDuration = 25;
 
     const records = stdout.trim().split("\n");
     for (let i = 1; i < records.length; i += 1) {
@@ -400,15 +402,15 @@ const extractClips = async () => {
 
       // It's possible that the trackers could be running for a bit before the screen recording starts so we don't to
       // include those. Same for timestamps after the recording has ended.
-      if (timestamp >= (captureStartTimestamp + seekLeadTime) && timestamp < duration) {
+      if (timestamp >= (captureStartTimestamp + thrashSeekLeadTime) && timestamp < duration) {
         const outfile = path.join(studyDir, `${tool}-${type}-clip-${i}.mkv`);
         console.log(`Extracting clip to ${outfile}`);
 
         spawn("ffmpeg", [
           "-y",
           "-i", screenRecordingFile,
-          "-ss", msToTime(timestamp - seekLeadTime - captureStartTimestamp),
-          "-t", clipDuration.toString(),
+          "-ss", msToTime(timestamp - (type === "init" ? initSeekLeadTime : thrashSeekLeadTime) - captureStartTimestamp),
+          "-t", (type === "init" ? initClipDuration : thrashClipDuration).toString(),
           "-c", "copy",
           outfile
         ]);
