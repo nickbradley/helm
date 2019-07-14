@@ -109,11 +109,11 @@
             let subprocess: ChildProcess | undefined;
             switch (tracker) {
               case "aw-watcher-idea":
-                  subprocess = spawn("idea", [item.path], { detached: true, stdio: "ignore" });
+                  subprocess = spawn("/usr/local/bin/idea", [item.path], { detached: true, stdio: "ignore" });
                 break;
               case "aw-watcher-vscode":
                 // VS Code needs the path split into project and file to open as desired.
-                subprocess = spawn("code", [item.custom.project, item.custom.file], { detached: true, stdio: "ignore"});
+                subprocess = spawn("/usr/local/bin/code", [item.custom.project, item.custom.file], { detached: true, stdio: "ignore"});
                 break;
               default:
                 shell.showItemInFolder(item.path);
