@@ -34,7 +34,8 @@ export class Database {
       ],
       "synchronize": true,
       "logging": false,
-      "logger": "simple-console"
+      "logger": "file",
+      maxQueryExecutionTime: 1000
     });
   }
 }

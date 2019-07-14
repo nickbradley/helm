@@ -2,11 +2,8 @@ import { Database } from "./Database";
 import { Server } from "./Server";
 import { ChildProcess, spawn } from "child_process";
 import * as path from "path";
-import { Platform } from "../common/Platform";
-import { Application } from "./entities/Application";
 import { ContextModel } from "./ContextModel";
 import {ipcRenderer} from "electron";
-import { getRepository } from "typeorm";
 import * as fs from "fs";
 import Log from "electron-log";
 
@@ -54,8 +51,8 @@ export class Daemon {
     Log.info(`Daemon::start() - Connecting to database.`);
     await this.db.connect();
 
-    Log.info(`Daemon::start() - Getting information about installed applications.`);
-    await this.loadHostApplications();
+    // Log.info(`Daemon::start() - Getting information about installed applications.`);
+    // await this.loadHostApplications();
 
     Log.info(`Daemon::start() - Starting ActivityWatch-compatible REST server.`);
     await this.server.start(this.restPort);
@@ -103,23 +100,6 @@ export class Daemon {
     });
   };
 
-  // @ts-ignore
-  private async loadHostApplications() {
-    const applications = Platform.listApplications();
-    const appEntities: Application[] = [];
 
-    for (const app of applications) {
-      const application = new Application();
-      application.name = app.name.toLowerCase();
-      application.icon = app.icon;
-      application.path = app.path;
-
-      if (!appEntities.some(e => e.name === application.name)) {
-        appEntities.push(application);
-      }
-    }
-
-    return getRepository(Application).save(appEntities);
-  };
 }
 

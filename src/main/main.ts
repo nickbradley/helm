@@ -19,7 +19,10 @@ import { ChildProcess, spawn,
 } from "child_process";
 import "reflect-metadata";
 import Log from "electron-log";
-
+import {Database} from "../backend/Database";
+import { Platform } from "../common/Platform";
+import { Application } from "../backend/entities/Application";
+import {getRepository} from "typeorm";
 
 declare const __static: string;
 const isDevelopment = process.env.NODE_ENV !== "production";
@@ -101,6 +104,12 @@ ipcMain.on("hide", (event: any) => {
 
 
 app.on("ready", async () => {
+  // TODO This is a hack: for some reason most of typeorm's functionality works in the background renderer process but not loading the application data; so we do that in main.
+  // Should probably make the background renderer process a plain node process and figure out all the webpack ugliness that goes with that.
+  await new Database(config["dbPath"]).connect();
+  Log.info("Main::ready() - Loading application data...");
+  await loadHostApplications();
+
   createTray();
   createWindow();
 
@@ -435,7 +444,24 @@ const extractClips = async () => {
       }
     }
   });
+};
 
+// @ts-ignore
+const loadHostApplications = async () => {
+  const applications = Platform.listApplications();
+  const appEntities: Application[] = [];
 
+  for (const app of applications) {
+    const application = new Application();
+    application.name = app.name.toLowerCase();
+    application.icon = app.icon;
+    application.path = app.path;
+
+    if (!appEntities.some(e => e.name === application.name)) {
+      appEntities.push(application);
+    }
+  }
+
+  return await getRepository(Application).save(appEntities);
 };
 
