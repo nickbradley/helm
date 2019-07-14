@@ -59,8 +59,7 @@ export class Daemon {
     await this.db.connect();
 
     Log.info(`Daemon::start() - Getting information about installed applications.`);
-    // TODO This is still causing exceptions at startup!
-    // await this.loadHostApplications();
+    await this.loadHostApplications();
 
     Log.info(`Daemon::start() - Starting ActivityWatch-compatible REST server.`);
     await this.server.start(this.restPort);

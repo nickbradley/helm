@@ -59,7 +59,8 @@ try {
   if (isDevelopment && err.code === "EEXIST") {
     console.warn("Study directory already exists. Some files might get overwritten.");
   } else {
-    throw err;
+    dialog.showErrorBox("Failed to create study directory.", `Couldn't create ${studyDir}: ${err}`);
+    app.exit(1);
   }
 }
 
@@ -170,6 +171,17 @@ const createTray = () => {
       type: "separator"
     },
     {
+      label: "Show UI devtools",
+      click() { mainWindow.webContents.openDevTools({mode: "detach"}); }
+    },
+    {
+      label: "Show daemon devtools",
+      click() { backgroundWindow.webContents.openDevTools({mode: "detach"}); }
+    },
+    {
+      type: "separator"
+    },
+    {
       label: "Exit",
       click() {
         app.quit();
@@ -246,6 +258,8 @@ const createWindow = () => {
         type: "background"
       }
     }));
+
+    mainWindow.hide();
   }
 
   // Hide the window when it loses focus
@@ -335,7 +349,7 @@ const startRecording = () => {
   yuv420p
    */
 
-  captureProc = spawn("ffmpeg", ffmpegOpts, { stdio: ["pipe", "ignore", "ignore"] });
+  captureProc = spawn("/usr/local/bin/ffmpeg", ffmpegOpts, { stdio: ["pipe", "ignore", "ignore"] });
 
   // const out = fs.createWriteStream(path.join(process.env["HOME"] || "", "helm-ffmpeg.log"));
   // captureProc.stdout!.pipe(out);
@@ -343,7 +357,9 @@ const startRecording = () => {
 
   captureProc.on("error", (err) => {
     Log.error(err);
-    stopRecording();
+    trayMenu.getMenuItemById("start-recording").visible = true;
+    trayMenu.getMenuItemById("stop-recording").visible = false;
+    dialog.showErrorBox("Recording Failed", `Failed to start ffmpeg: ${err}`);
   });
 
   captureProc.on("close", (code: number) => {
@@ -406,7 +422,7 @@ const extractClips = async () => {
         const outfile = path.join(studyDir, `${tool}-${type}-clip-${i}.mkv`);
         console.log(`Extracting clip to ${outfile}`);
 
-        spawn("ffmpeg", [
+        spawn("/usr/local/bin/ffmpeg", [
           "-y",
           "-i", screenRecordingFile,
           "-ss", msToTime(timestamp - (type === "init" ? initSeekLeadTime : thrashSeekLeadTime) - captureStartTimestamp),
