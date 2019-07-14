@@ -8,7 +8,7 @@ import {
   Tray,
   screen,
   shell,
-  ipcMain,
+  ipcMain
 } from "electron";
 import * as fs from "fs";
 import * as path from "path";
@@ -47,9 +47,18 @@ if (isDevelopment) {
 // Configure logging
 Log.transports.file.fileName = `${app.getName()}.log`;
 
-// This is also defined in index.ts
-const dbPath = path.join(app.getPath("userData"), "helm.db");
-// const db = new Database(dbPath);
+
+
+const configFile = path.join(app.getPath("userData"), "helmconfig.json");
+let config: {[key: string]: any};
+try {
+  Log.info(`Reading config file from ${configFile}`);
+  config = JSON.parse(fs.readFileSync(configFile, "utf8"));
+} catch (err) {
+  Log.error(`<FATAL> Failed to read ${configFile}. Please ensure the file exists and is valid JSON.`);
+  throw err;
+}
+
 
 const studyDir = path.join(process.env["HOME"] || "", "/study");
 try {
@@ -77,6 +86,9 @@ let trayMenu: Menu;
 let captureProc: ChildProcess;
 let captureStartTimestamp: number;
 let captureEndTimestamp: number = 0;
+
+
+
 
 switch (os.platform()) {
   case "darwin":
@@ -395,7 +407,7 @@ const extractClips = async () => {
   const scriptPath = "/Users/ncbrad/Public/helm-study/extract-clips.R";
 
 
-  execFile(scriptPath, [dbPath], (error, stdout, stderr) => {
+  execFile(scriptPath, [config["dbPath"]], (error: any, stdout: any, stderr: any) => {
     if (error) {
       dialog.showErrorBox("Extracting Clips Failed",`Encountered error when trying to extract clips: ${error.message}`);
     }

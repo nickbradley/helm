@@ -7,9 +7,7 @@ export class ContextModel {
   
   constructor(projects: {[project: string]: {}}) {
     this.project = "";
-    this.projects = {
-      helm: { root: "/Users/ncbrad/do/helm" }
-    };
+    this.projects = projects;
   }
   
   public async search(opts: {searchTerm: string, project: string}) {
