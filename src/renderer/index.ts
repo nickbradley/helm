@@ -1,5 +1,3 @@
-import Log from "../backend/Log";
-
 import Vue from "vue";
 import * as AsyncComputed from "vue-async-computed";
 import "vue-awesome/icons" // import all icons (use vue-awesome/icons/ICON_NAME to import specific icons)
@@ -8,9 +6,11 @@ import * as path from "path";
 import { remote } from "electron";
 import App from "./App.vue";
 import { Daemon } from "../backend/Daemon";
+import Log from "electron-log";
 
 
 function renderUI() {
+  Log.transports.file.fileName = "ui.log";
   Log.info(`Starting Vue...`);
 
   Vue.use(AsyncComputed as any);
@@ -25,6 +25,7 @@ function renderUI() {
 }
 
 async function startBackground() {
+  Log.transports.file.fileName = "background.log";
   Log.info("Starting helm daemon process...");
 
   const configFile = path.join(remote.app.getPath("userData"), "helmconfig.json");
@@ -40,10 +41,7 @@ async function startBackground() {
 
 
 (async () => {
-  Log.info(`Renderer process started.`);
-
   const renderType = new URLSearchParams(window.location.search).get("type");
-  console.log("Starting with render type =", renderType);
   switch (renderType) {
     case "ui":
       renderUI();

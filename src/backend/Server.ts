@@ -7,15 +7,18 @@ import { Shell } from "./entities/Shell";
 import { Tracker } from "./entities/Tracker";
 import { Window } from "./entities/Window";
 import { ObjectLiteral } from "typeorm";
+import Log from "electron-log";
 
 export class Server {
   private readonly rest: restify.Server;
 
   constructor(name: string) {
+    Log.info(`Server() - Creating REST server '${ name }'`);
     this.rest = restify.createServer({ name });
   }
 
   public async start(port: number) {
+    Log.info(`Server::start() - Starting REST server on port ${port}...`);
     return new Promise(async (resolve, reject) => {
       this.rest.use(restify.plugins.bodyParser());
 
@@ -138,7 +141,7 @@ export class Server {
 
 
       this.rest.listen(port, () => {
-        console.log("Server is running on port ", port);
+        Log.info(`Server::start() - SUCCESS.`);
         resolve();
       });
 
@@ -169,7 +172,7 @@ export class Server {
         if (event.duration) {
           e["duration"] = event.duration;
         }
-        console.log("Inserting event: ", e);
+        // console.log("Inserting event: ", e);
         const record = entity.create(e);
         record.tracker = tracker;
         savePromise.push(record.save());
@@ -208,16 +211,16 @@ export class Server {
               .where("id = :id", { id: record.id })
               .execute();
           } else {
-            console.warn("Duration would be negative");
+            Log.warn("Duration would be negative");
           }
         } else {
-          console.warn("Not within pulsewindow. lastTime: ", lastTime, "currTime: ", currTime, "pulsePeriodEnd:", pulsePeriodEnd);
+          Log.warn("Not within pulsewindow. lastTime: ", lastTime, "currTime: ", currTime, "pulsePeriodEnd:", pulsePeriodEnd);
         }
       } else {
-        console.log("Data is different");
+        Log.info("Data is different");
       }
     } else {
-      console.log("No record exists yet");
+      Log.warn(`Tracker ${tracker.id} not registered. Cannot insert data record.`);
     }
 
     return Server.saveEvents(key, [{ duration, data }]);

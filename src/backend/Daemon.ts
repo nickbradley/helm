@@ -1,8 +1,3 @@
-// config file:
-// - port
-// - dbPath
-
-import Log from "./Log";
 import { Database } from "./Database";
 import { Server } from "./Server";
 import { ChildProcess, spawn } from "child_process";
@@ -13,6 +8,7 @@ import { ContextModel } from "./ContextModel";
 import {ipcRenderer} from "electron";
 import { getRepository } from "typeorm";
 import * as fs from "fs";
+import Log from "electron-log";
 
 export class Daemon {
   public readonly restPort: number;

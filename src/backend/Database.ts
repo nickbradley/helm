@@ -7,7 +7,7 @@ import { Interaction } from "./entities/Interaction";
 import { Shell } from "./entities/Shell";
 import { Tracker } from "./entities/Tracker";
 import { ProjectSession } from "./entities/ProjectSession";
-import log from "electron-log";
+import Log from "electron-log";
 
 export class Database {
   public readonly path: string;
@@ -17,7 +17,7 @@ export class Database {
   }
 
   public async connect(): Promise<Connection> {
-    log.info(`DB::connect() - Connecting to ${this.path}`);
+    Log.info(`DB::connect() - Connecting to ${this.path}`);
 
     return createConnection({
       "type": "sqlite",

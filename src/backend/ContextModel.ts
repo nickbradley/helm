@@ -1,16 +1,19 @@
 import { getManager } from "typeorm";
 import { Platform } from "../common/Platform";
+import Log from "electron-log";
 
 export class ContextModel {
   public project: string;
   public projects: {[project: string]: {[attr: string]: any}};
   
   constructor(projects: {[project: string]: {}}) {
+    Log.info(`ContextModel() - Initializing with projects: ${projects}`);
     this.project = "";
     this.projects = projects;
   }
   
   public async search(opts: {searchTerm: string, project: string}) {
+    Log.info(`ContextModel::search(..) - Searching for term '${opts.searchTerm}' in '${opts.project}' project.`);
     if (opts.project && !Object.keys(this.projects).includes(opts.project)) {
       throw new Error(`Project ${opts.project} is not defined in the config file.`);
     }
@@ -72,11 +75,6 @@ export class ContextModel {
         order by 0.8 * recency_rank + 0.15 * frequency_rank + 0.05 * duration_rank desc
         limit 10;
         `, [this.project, `%${term}%`, ...openWindowTitles]);
-
-    console.log("PROJECT:", this.project);
-    console.log("SEARCH TERM:", term);
-    console.log("WINDOW TITLES", openWindowTitles);
-    console.log("***WINDOW RAW RESULTS****", windowRawResults);
 
     const windowResults = windowRawResults.map((r : any) => ({
       icon: r.icon,
@@ -291,8 +289,6 @@ export class ContextModel {
     }
 
     return windowResults.concat(browserResults).concat(fileResults).concat(shellResults);
-
-
   }
 }
 

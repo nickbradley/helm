@@ -17,19 +17,9 @@ import { format as formatUrl } from "url";
 import { ChildProcess, spawn,
   execFile
 } from "child_process";
-// import { Database } from "../backend/D¡atabase";
-// import * as toCSV from "csv-stringify¡"
-
-// import { Server } from "./Server";
-// import { Application } from "../common/entities/Application";
-// import { Platform } from "../common/Platform";
-// import { DB } from "../common/DB";
 import "reflect-metadata";
 import Log from "electron-log";
-// import { Browser } from "../backend/entities/Browser";
-// import { Shell } from "../backend/entities/Shell";
-// import MenuItem = Electron.MenuItem;
-// import { ObjectLiteral } from "typeorm";
+
 
 declare const __static: string;
 const isDevelopment = process.env.NODE_ENV !== "production";
@@ -45,7 +35,7 @@ if (isDevelopment) {
 }
 
 // Configure logging
-Log.transports.file.fileName = `${app.getName()}.log`;
+Log.transports.file.fileName = "main.log";
 
 
 
@@ -63,10 +53,10 @@ try {
 const studyDir = path.join(process.env["HOME"] || "", "/study");
 try {
   fs.mkdirSync(studyDir);
-  console.log(`Created study directory: ${studyDir}`);
+  Log.info(`Created study directory: ${studyDir}`);
 } catch (err) {
   if (isDevelopment && err.code === "EEXIST") {
-    console.warn("Study directory already exists. Some files might get overwritten.");
+    Log.warn("Study directory already exists. Some files might get overwritten.");
   } else {
     dialog.showErrorBox("Failed to create study directory.", `Couldn't create ${studyDir}: ${err}`);
     app.exit(1);
@@ -121,7 +111,6 @@ app.on("ready", async () => {
 });
 
 // app.on("will-quit", async () => {
-//   console.log("App is quitting!!!");
 //   // await server.stop();
 //   // globalShortcut.unregisterAll();
 //   app.quit();
@@ -129,14 +118,14 @@ app.on("ready", async () => {
 //
 // // Quit the app when the window is closed
 // app.on("window-all-closed", () => {
-//   console.log("App should exit!!!");
 //   app.quit();
 // });
 
 // @ts-ignore
 const createTray = () => {
+  Log.info("Creating tray...");
   // const assestPath = path.join(staticPath, '/static').replace(/\\/g, '\\\\');
-  console.log("staticPath", staticPath);
+
   tray = new Tray(path.join(staticPath, "/status.png"));
   tray.setPressedImage(path.join(staticPath, "/status-white.png"));
   trayMenu = Menu.buildFromTemplate([
@@ -217,6 +206,7 @@ const getWindowPosition = () => {
 
 // @ts-ignore
 const createWindow = () => {
+  Log.info("Creating windows...");
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   const devBrowserWindow = {
     width: 0.66 * width,
@@ -432,7 +422,7 @@ const extractClips = async () => {
       // include those. Same for timestamps after the recording has ended.
       if (timestamp >= (captureStartTimestamp + thrashSeekLeadTime) && timestamp < duration) {
         const outfile = path.join(studyDir, `${tool}-${type}-clip-${i}.mkv`);
-        console.log(`Extracting clip to ${outfile}`);
+        Log.verbose(`Extracting clip to ${outfile}`);
 
         spawn("/usr/local/bin/ffmpeg", [
           "-y",
