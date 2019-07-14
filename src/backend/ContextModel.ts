@@ -256,7 +256,7 @@ export class ContextModel {
         from shell
                join sessionstats
                     on shell.session = sessionstats.session
-        order by relevance desc, shell.session, created desc
+        order by relevance desc, shell.session, created
         `, [this.project, `%${term}%`]);
 
     const shellResults = [];
