@@ -119,6 +119,7 @@ export class Server {
       // Heartbeat endpoints
 
       this.rest.post("/api/0/buckets/:key/heartbeat", restify.plugins.queryParser(), async (req: restify.Request, res: restify.Response, next: restify.Next) => {
+        Log.verbose(`Heartbeat params: ${JSON.stringify(req.params)}, query: ${JSON.stringify(req.query)}, body: ${JSON.stringify(req.body)}`);
         const pulsetime = parseFloat(req.query.pulsetime);
         if (isNaN(pulsetime)) {
           res.send(400, "Missing required parameter pulsetime");
@@ -211,16 +212,17 @@ export class Server {
               .where("id = :id", { id: record.id })
               .execute();
           } else {
-            Log.warn("Duration would be negative");
+            Log.warn(`Bucket ${tracker.key}: Duration would be negative`);
           }
         } else {
-          Log.warn("Not within pulsewindow. lastTime: ", lastTime, "currTime: ", currTime, "pulsePeriodEnd:", pulsePeriodEnd);
+          Log.warn(`Bucket ${tracker.key}: event outside pulse window on ${pulsetime}. Previous record time: ${lastTime} and duration ${record.duration}; current record time: ${currTime}`);
+          Log.debug(`Event is ${JSON.stringify(data)}`);
         }
       } else {
-        Log.info("Data is different");
+        Log.info(`Bucket ${tracker.key}: event payload is different.`);
       }
     } else {
-      Log.warn(`Tracker ${tracker.id} not registered. Cannot insert data record.`);
+      Log.warn(`Tracker ${tracker.key} not registered. Cannot insert data record.`);
     }
 
     return Server.saveEvents(key, [{ duration, data }]);

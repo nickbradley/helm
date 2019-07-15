@@ -30,6 +30,7 @@
   import { ChildProcess, spawn } from "child_process";
   import * as fs from "fs";
   import { stripIndent } from "common-tags";
+  import Log from "electron-log";
 
   export default {
     name: "App",
@@ -77,13 +78,24 @@
       }
     },
     mounted() {
-      // Get the initial list of results (TODO This doesn't work)
-      (this as any).search();
+      console.log("App mounted");
       ipcRenderer.on("search-results", (event: any, arg: any) => {
         (this as any).searching = false;
         (this as any).searchResults = arg;
 
       });
+      ipcRenderer.on("window-focused", () => {
+        if ((this as any).searchTerm !== "") {
+          (this as any).$el.getElementsByTagName("input")[0].value = "";
+          (this as any).searchTerm = "";
+        } else {
+          (this as any).search();
+          (this as any).searching = true;
+        }
+      });
+      // Get the initial list of results (TODO This doesn't work)
+      (this as any).search();
+      (this as any).searching = true;
     },
     methods: {
       open: function(title: any) {
@@ -109,10 +121,12 @@
             let subprocess: ChildProcess | undefined;
             switch (tracker) {
               case "aw-watcher-idea":
+                  Log.verbose(`WindowAccelerator::onTrigger() - Running /usr/local/bin/idea ${item.path}.`);
                   subprocess = spawn("/usr/local/bin/idea", [item.path], { detached: true, stdio: "ignore" });
                 break;
               case "aw-watcher-vscode":
                 // VS Code needs the path split into project and file to open as desired.
+                Log.verbose(`WindowAccelerator::onTrigger() - Running /usr/local/bin/code ${item.custom.project} ${item.custom.file}.`);
                 subprocess = spawn("/usr/local/bin/code", [item.custom.project, item.custom.file], { detached: true, stdio: "ignore"});
                 break;
               default:

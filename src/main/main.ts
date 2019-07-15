@@ -19,10 +19,25 @@ import { ChildProcess, spawn,
 } from "child_process";
 import "reflect-metadata";
 import Log from "electron-log";
-import {Database} from "../backend/Database";
 import { Platform } from "../common/Platform";
 import { Application } from "../backend/entities/Application";
 import {getRepository} from "typeorm";
+
+// fs.writeFileSync(`${process.env["HOME"]}/test.log`, "this is a test file.");
+//
+// process.on("uncaughtException", (err) => {
+//   fs.writeFileSync(`${process.env["HOME"]}/error1.log`, "uncaughtException");
+// });
+// process.on("multipleResolves", () => {
+//   fs.writeFileSync(`${process.env["HOME"]}/error2.log`, "multipleResolves");
+// });
+// process.on("rejectionHandled", () => {
+//   fs.writeFileSync(`${process.env["HOME"]}/error3.log`, "rejectionHandled");
+// });
+// process.on("unhandledRejection", (reason, p) => {
+//   fs.writeFileSync(`${process.env["HOME"]}/error4.log`, `Unhandled Rejection at: ${p}; reason: ${reason}`);
+// });
+
 
 declare const __static: string;
 const isDevelopment = process.env.NODE_ENV !== "production";
@@ -66,6 +81,10 @@ try {
   }
 }
 
+// Copy the template db file to the study dir
+Log.info(`Copying database template file to study dir.`);
+fs.copyFileSync("/Users/ncbrad/Public/helm-study/helm.template.db", path.join(studyDir, "helm.db"));
+
 
 
 const screenRecordingFile = path.join(studyDir, "helm-screencapture.mkv");
@@ -104,12 +123,6 @@ ipcMain.on("hide", (event: any) => {
 
 
 app.on("ready", async () => {
-  // TODO This is a hack: for some reason most of typeorm's functionality works in the background renderer process but not loading the application data; so we do that in main.
-  // Should probably make the background renderer process a plain node process and figure out all the webpack ugliness that goes with that.
-  await new Database(config["dbPath"]).connect();
-  Log.info("Main::ready() - Loading application data...");
-  await loadHostApplications();
-
   createTray();
   createWindow();
 
@@ -280,6 +293,10 @@ const createWindow = () => {
     }
   });
 
+  mainWindow.on("focus", () => {
+    mainWindow.webContents.send("window-focused");
+  });
+
   if (isDevelopment) {
     mainWindow.webContents.on("did-frame-finish-load", () => {
       mainWindow.webContents.openDevTools();
@@ -447,10 +464,12 @@ const extractClips = async () => {
 };
 
 // @ts-ignore
+// TODO we'd like to do this at start-up but it seems to crash too often.
 const loadHostApplications = async () => {
   const applications = Platform.listApplications();
   const appEntities: Application[] = [];
 
+  Log.verbose(`loadHostApplications() - Processing ${applications.length} applications.`);
   for (const app of applications) {
     const application = new Application();
     application.name = app.name.toLowerCase();
@@ -462,6 +481,9 @@ const loadHostApplications = async () => {
     }
   }
 
-  return await getRepository(Application).save(appEntities);
+  Log.verbose(`loadHostApplications() - Clearing existing application data...`);
+  await getRepository(Application).clear();
+  Log.verbose(`loadingHostApplications() - Loading new application data...`);
+  return getRepository(Application).insert(appEntities);
 };
 

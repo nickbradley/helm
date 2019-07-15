@@ -32,7 +32,7 @@ export class Database {
         Window,
         ProjectSession
       ],
-      "synchronize": true,
+      "synchronize": false,
       "logging": false,
       "logger": "file",
       maxQueryExecutionTime: 1000

@@ -4,7 +4,7 @@ import { ChildProcess, spawn } from "child_process";
 import * as path from "path";
 import { ContextModel } from "./ContextModel";
 import {ipcRenderer} from "electron";
-import * as fs from "fs";
+import * as fs from "fs-extra";
 import Log from "electron-log";
 
 export class Daemon {
@@ -89,9 +89,19 @@ export class Daemon {
   }
 
   private async startWatchers() {
+    // We need to remove queued events before startup otherwise aw-watcher-* won't try to create a new bucket which is
+    // probably needed since the name depends on the hostname (which seems to change based on network).
+    await fs.emptyDir(`${process.env["HOME"]}/Library/Application Support/activitywatch/aw-client/queued`);
+
     this.windowWatcher = spawn(path.join(this.awPath, "aw-watcher-window"));
     this.windowWatcher.on("error", (code: number) => {
       Log.error(`aw-watcher-window failed unexpectedly with code ${code}.`);
+    });
+    this.windowWatcher.stdout!.on("data", (data) => {
+      Log.verbose(`aw-watcher-window (stdout): ${data}`);
+    });
+    this.windowWatcher.stderr!.on("data", (data) => {
+      Log.verbose(`aw-watcher-window (stderr): ${data}`);
     });
 
     this.afkWatcher = spawn(path.join(this.awPath, "aw-watcher-afk"));
