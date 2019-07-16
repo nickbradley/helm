@@ -16,7 +16,7 @@
     "restify": "^8.2.0",
     "restify-cors-middleware": "^1.1.1",
     "source-map-support": "^0.5.11",
-    "sqlite3": "4.0.9",
+    "sqlite3": "^4.0.9",
     "typeorm": "0.2.18",
     "vue-async-computed": "^3.6.1",
     "vue-awesome": "^3.5.4"

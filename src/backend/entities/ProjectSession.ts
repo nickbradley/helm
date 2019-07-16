@@ -8,6 +8,7 @@ import { ViewEntity, ViewColumn } from "typeorm";
              created,
              duration
       from editor
+      where project != 'unknown'
       
       union all
       

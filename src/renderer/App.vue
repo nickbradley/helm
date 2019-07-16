@@ -52,8 +52,8 @@
         partialSearch: null,
         inputTimer: null,
         searching: false,
-        projects: ["kanboard", "teammates"],
-        project: "kanboard"
+        projects: ["kanboard", "teammates", "helm"],
+        project: "helm"
       };
     },
     watch: {
@@ -140,7 +140,7 @@
           case "window":
             console.log("WINDOW TRIGGERED", item);
             // description, group, icon, relevance, title
-            Platform.activateWindow(item.title);
+            Platform.activateWindow(item.description);
             break;
           case "website":
             console.log("WEBSITE TRIGGERED", item);

@@ -19,9 +19,10 @@ import { ChildProcess, spawn,
 } from "child_process";
 import "reflect-metadata";
 import Log from "electron-log";
-import { Platform } from "../common/Platform";
-import { Application } from "../backend/entities/Application";
-import {getRepository} from "typeorm";
+// import { Platform } from "../common/Platform";
+// import { Application } from "../backend/entities/Application";
+// import {getRepository} from "typeorm";
+// import { Database } from "../backend/Database";
 
 // fs.writeFileSync(`${process.env["HOME"]}/test.log`, "this is a test file.");
 //
@@ -463,27 +464,43 @@ const extractClips = async () => {
   });
 };
 
-// @ts-ignore
-// TODO we'd like to do this at start-up but it seems to crash too often.
-const loadHostApplications = async () => {
-  const applications = Platform.listApplications();
-  const appEntities: Application[] = [];
-
-  Log.verbose(`loadHostApplications() - Processing ${applications.length} applications.`);
-  for (const app of applications) {
-    const application = new Application();
-    application.name = app.name.toLowerCase();
-    application.icon = app.icon;
-    application.path = app.path;
-
-    if (!appEntities.some(e => e.name === application.name)) {
-      appEntities.push(application);
-    }
-  }
-
-  Log.verbose(`loadHostApplications() - Clearing existing application data...`);
-  await getRepository(Application).clear();
-  Log.verbose(`loadingHostApplications() - Loading new application data...`);
-  return getRepository(Application).insert(appEntities);
-};
+// // @ts-ignore
+// // TODO we'd like to do this at start-up but it seems to crash too often.
+// // TODO Report this as a TypeORM bug...
+// /*
+//   After considerable time I figured out why `getRepository(Application).insert(appEntities)` causes a seg fault: it freakin' escapes column names with double-quotes instead of single-quotes!
+//   Not sure why the sqlite3 doesn't catch this (or convert them).
+//
+//   If you turn on logging and try to insert a single record you'll see the generate query is `INSERT INTO "application"("identifier", "name", "icon", "path") VALUES (?, ?, ?, ?) -- PARAMETERS: ["com.apple.Notes","Notes","","/Applications/Notes.app"]`
+//   You can reproduce using `getRepository(Application).query(`insert into "application"("identifier", "name", "icon", "path") values (?,?,?,?)`, [application.identifier, application.name, application.icon, application.path])`
+//  */
+// // @ts-ignore
+// const loadHostApplications = async () => {
+//   const applications = Platform.listApplications();
+//   const appEntities: Application[] = [];
+//   // @ts-ignore
+//   const appRepo = getRepository(Application);
+//
+//   // Log.verbose(`loadHostApplications() - Clearing existing application data...`);
+//   // await appRepo.clear();
+//
+//
+//   for (const app of applications) {
+//     const application = new Application();
+//     application.identifier = app.id;
+//     application.name = app.name;
+//     application.icon = app.icon;
+//     application.path = app.path;
+//
+//     const duplicates = appEntities.filter(e => e.identifier === application.identifier);
+//     if (duplicates.length >= 1) {
+//       Log.warn(`loadHostApplications() - Skipping duplicate application. Duplicate: ${application}`);
+//     } else {
+//       Log.verbose(`loadingHostApplications() - Loading application data: ${application}`);
+//       await appRepo.query(`insert into application(identifier, name, icon, path) values ('${application.identifier}', '${application.name}', '${application.icon}', '${application.path}')`);
+//       // fs.appendFileSync("insert.sql", `insert into application(identifier, name, icon, path) values ('${application.identifier}', '${application.name}', '${application.icon}', '${application.path}')\n`);
+//       appEntities.push(application);
+//     }
+//   }
+// };
 

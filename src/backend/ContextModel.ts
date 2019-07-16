@@ -37,7 +37,8 @@ export class ContextModel {
                  sum(duration) as duration
           from window win
                  join project_session ses on win.created between ses.start and ses.end and ses.project = ?
-                 left join application app on app.name = lower(win.app)
+                 -- left join application app on app.name = lower(win.app)
+                 left join application app on app.identifier = win.app
           where title like ? and lower(substr(title, 0, 51)) IN (${openWindowTitles.map(_ => "?")})
           group by title
         ),

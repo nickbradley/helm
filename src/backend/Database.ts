@@ -32,10 +32,10 @@ export class Database {
         Window,
         ProjectSession
       ],
-      "synchronize": false,
-      "logging": false,
+      "synchronize": true,
+      "logging": "all",
       "logger": "file",
-      maxQueryExecutionTime: 1000
+      // maxQueryExecutionTime: 1000
     });
   }
 }
