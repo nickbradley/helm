@@ -8,13 +8,17 @@ import { Tracker } from "./entities/Tracker";
 import { Window } from "./entities/Window";
 import { ObjectLiteral } from "typeorm";
 import Log from "electron-log";
+import { ProjectWatcher } from "./ProjectWatcher";
 
 export class Server {
   private readonly rest: restify.Server;
 
+  private projectWatcher: ProjectWatcher;
+
   constructor(name: string) {
-    Log.info(`Server() - Creating REST server '${ name }'`);
+    Log.info(`Server() - Creating REST server '${name}'`);
     this.rest = restify.createServer({ name });
+    this.projectWatcher = new ProjectWatcher(["kanboard", "teammates", "helm"]);
   }
 
   public async start(port: number) {
@@ -34,7 +38,7 @@ export class Server {
 
 
       this.rest.pre((req: restify.Request, res: restify.Response, next: restify.Next) => {
-        console.log(req.method, req.url);
+        // console.log(req.method, req.url);
         return next();
       });
 
@@ -106,9 +110,10 @@ export class Server {
         }
 
         try {
-          const processedEvents = await Server.saveEvents(key, events);
+          const processedEvents = await this.saveEvents(key, events);
           res.send(200, processedEvents.length === 1 ? processedEvents[0] : null);
         } catch (err) {
+          Log.error(`POST /api/0/buckets/:key/event - ${err}`);
           res.send(400, err.message);
         }
 
@@ -119,7 +124,7 @@ export class Server {
       // Heartbeat endpoints
 
       this.rest.post("/api/0/buckets/:key/heartbeat", restify.plugins.queryParser(), async (req: restify.Request, res: restify.Response, next: restify.Next) => {
-        Log.verbose(`Heartbeat params: ${JSON.stringify(req.params)}, query: ${JSON.stringify(req.query)}, body: ${JSON.stringify(req.body)}`);
+        // Log.verbose(`Heartbeat params: ${JSON.stringify(req.params)}, query: ${JSON.stringify(req.query)}, body: ${JSON.stringify(req.body)}`);
         const pulsetime = parseFloat(req.query.pulsetime);
         if (isNaN(pulsetime)) {
           res.send(400, "Missing required parameter pulsetime");
@@ -132,9 +137,10 @@ export class Server {
         const duration = req.body.duration || 0;
 
         try {
-          const event = await Server.processHeartbeat(key, pulsetime, timestamp, duration, data);
+          const event = await this.processHeartbeat(key, pulsetime, timestamp, duration, data);
           res.send(200, event);
         } catch (err) {
+          Log.error(`POST /api/0/buckets/:key/heartbeat - ${err}`);
           res.send(400, err.message);
         }
         return next();
@@ -159,7 +165,8 @@ export class Server {
    * @param key
    * @param events
    */
-  private static async saveEvents(key: string, events: any[]): Promise<ObjectLiteral[]> {
+  private async saveEvents(key: string, events: any[]): Promise<ObjectLiteral[]> {
+    Log.info(`saveEvents -- key: ${key}, events: ${JSON.stringify(events)}`);
     const tracker = await Tracker.findOneOrFail({ key });
     const entity = Server.getEntityByTrackerType(tracker.type);
 
@@ -176,6 +183,9 @@ export class Server {
         // console.log("Inserting event: ", e);
         const record = entity.create(e);
         record.tracker = tracker;
+
+        await this.activeProjectFromRequest(tracker.type, record);
+
         savePromise.push(record.save());
       }
     }
@@ -183,7 +193,7 @@ export class Server {
     return Promise.all(savePromise);
   }
 
-  private static async processHeartbeat(key: string, pulsetime: number, timestamp: Date, duration: number, data: { [key: string]: any }): Promise<{}> {
+  private async processHeartbeat(key: string, pulsetime: number, timestamp: Date, duration: number, data: { [key: string]: any }): Promise<{}> {
     const tracker = await Tracker.findOneOrFail({ key });
     const entity = Server.getEntityByTrackerType(tracker.type);
     const record = await entity.findOne({
@@ -205,6 +215,8 @@ export class Server {
           const newDuration = Math.round((currTime - lastTime) + duration);
           if (newDuration > 0) {
             // Update duration of record
+            record.duration = newDuration;
+            await this.activeProjectFromRequest(tracker.type, record);
             return entity
               .createQueryBuilder()
               .update()
@@ -225,7 +237,31 @@ export class Server {
       Log.warn(`Tracker ${tracker.key} not registered. Cannot insert data record.`);
     }
 
-    return Server.saveEvents(key, [{ duration, data }]);
+    Log.info("***CALLING SAVE EVENTS");
+    return this.saveEvents(key, [{ duration, data }]);
+  }
+
+  private async activeProjectFromRequest(trackerType: string, record: any) {
+    let project: string | undefined;
+    switch (trackerType) {
+      case "web.tab.current":
+        // @ts-ignore
+        const url = (record as Browser).url.toLowerCase();
+        project = this.projectWatcher.extractProjectFromUrl(url);
+        break;
+      case "shell.command":
+        // @ts-ignore
+        const cwd = (record as Shell).cwd.toLowerCase();
+        project = this.projectWatcher.extractProjectFromPath(cwd);
+        break;
+      case "app.editor.activity":
+        // @ts-ignore
+        project = (record as Editor).project.toLowerCase();
+    }
+
+    if (project && this.projectWatcher.projectNames.includes(project)) {
+      await this.projectWatcher.update(project, record.created, record.duration * 1000);
+    }
   }
 
 

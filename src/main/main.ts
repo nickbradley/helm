@@ -124,6 +124,7 @@ ipcMain.on("hide", (event: any) => {
 
 
 app.on("ready", async () => {
+  // await new Database("/Users/ncbrad/study/helm.db").connect();
   createTray();
   createWindow();
 

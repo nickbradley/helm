@@ -30,13 +30,13 @@ export class ContextModel {
     const windowRawResults = await entityManager.query(`
         with grouped as (
           select icon,
-                 name,
+                 app.name,
                  title,
                  count(*)      as frequency,
                  max(created)  as recency,
                  sum(duration) as duration
           from window win
-                 join project_session ses on win.created between ses.start and ses.end and ses.project = ?
+                 join active_project ses on win.created between ses.start and ses.end and ses.name = ?
                  -- left join application app on app.name = lower(win.app)
                  left join application app on app.identifier = win.app
           where title like ? and lower(substr(title, 0, 51)) IN (${openWindowTitles.map(_ => "?")})
@@ -77,7 +77,7 @@ export class ContextModel {
                  max(browser.created)  as recency,
                  sum(duration)         as duration
           from browser
-                 join project_session ses on browser.created between ses.start and ses.end and ses.project = ?
+                 join active_project ses on browser.created between ses.start and ses.end and ses.name = ?
                  left join tracker on tracker.id = browser.trackerId
                  left join application app on app.name = case when tracker.key like '%firefox%' then 'firefox' else 'google chrome' end
           where title like ? or url like ?
@@ -118,7 +118,7 @@ export class ContextModel {
                  max(created)  as recency,
                  sum(duration) as duration
           from editor
-                 join project_session ses on editor.created between ses.start and ses.end and ses.project = ?
+                 join active_project ses on editor.created between ses.start and ses.end and ses.name = ?
           where file like ?
           group by file, trackerId
         ),
@@ -160,7 +160,7 @@ export class ContextModel {
                  max(created)  as recency,
                  sum(duration) as duration
           from shell
-                 join project_session ses on shell.created between ses.start and ses.end and ses.project = ?
+                 join active_project ses on shell.created between ses.start and ses.end and ses.name = ?
 
           where cmdstr like ?
           group by session, cmdstr

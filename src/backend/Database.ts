@@ -8,6 +8,7 @@ import { Shell } from "./entities/Shell";
 import { Tracker } from "./entities/Tracker";
 import { ProjectSession } from "./entities/ProjectSession";
 import Log from "electron-log";
+import { ActiveProject} from "./entities/ActiveProject";
 
 export class Database {
   public readonly path: string;
@@ -27,13 +28,14 @@ export class Database {
         Browser,
         Editor,
         Interaction,
+        ActiveProject,
         Shell,
         Tracker,
         Window,
         ProjectSession
       ],
       "synchronize": true,
-      "logging": "all",
+      "logging": false,
       "logger": "file",
       // maxQueryExecutionTime: 1000
     });
