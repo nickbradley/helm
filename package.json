@@ -23,20 +23,19 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^5.2.2",
-    "@types/chai": "^4.1.7",
     "@types/dom-inputevent": "^1.0.3",
-    "@types/mocha": "^5.2.6",
+    "@types/jest": "^24.0.15",
     "@types/restify": "^7.2.9",
     "@types/restify-cors-middleware": "^1.0.1",
     "asar": "^1.0.0",
-    "chai": "^4.2.0",
     "electron": "4.1.1",
     "electron-builder": "^20.38.5",
     "electron-webpack": "^2.6.2",
     "electron-webpack-ts": "^3.1.1",
     "electron-webpack-vue": "^2.2.3",
-    "mocha": "^6.0.0",
+    "jest": "^24.8.0",
     "prettier": "^1.16.4",
+    "ts-jest": "^24.0.2",
     "ts-node": "^8.0.2",
     "tslint": "^5.12.1",
     "tslint-config-airbnb": "^5.11.1",
@@ -55,7 +54,8 @@
     "start": "electron ./dist/main.js",
     "postinstall": "electron-builder install-app-deps",
     "pack": "yarn dist --dir",
-    "pack2": "yarn compile && electron-builder --dir"
+    "pack2": "yarn compile && electron-builder --dir",
+    "test": "jest"
   },
   "main": "src/main/index.js",
   "engines": {
