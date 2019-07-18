@@ -9,16 +9,29 @@ import { Window } from "./entities/Window";
 import { ObjectLiteral } from "typeorm";
 import Log from "electron-log";
 import { ProjectWatcher } from "./ProjectWatcher";
+import { ContextModel } from "./ContextModel";
 
 export class Server {
   private readonly rest: restify.Server;
 
   private projectWatcher: ProjectWatcher;
+  private contextModel: ContextModel;
 
   constructor(name: string) {
     Log.info(`Server() - Creating REST server '${name}'`);
     this.rest = restify.createServer({ name });
     this.projectWatcher = new ProjectWatcher(["kanboard", "teammates", "helm"]);
+    this.contextModel = new ContextModel({
+      helm: {
+        root: "/Users/ncbrad/do/helm",
+      },
+      kanboard: {
+        root: "fakepath",
+      },
+      teammates: {
+        root: "jksdfsd",
+      },
+    });
   }
 
   public async start(port: number) {
@@ -51,6 +64,23 @@ export class Server {
       //   console.warn(req.method, req.url, "MethodNotAllowed");
       // });
 
+
+      // Artifact endpoints
+      this.rest.get("/api/0/artifacts", restify.plugins.queryParser(), async (req: restify.Request, res: restify.Response, next: restify.Next) => {
+        Log.info(`GET /api/0/artifacts - contains: ${req.query.contains}; project: ${req.query.project}`);
+        try {
+          const contains = req.query.contains || "";
+          const project = req.query.project || this.projectWatcher.activeProject!.name;
+
+          const results = await this.contextModel.search({ project, searchTerm: contains });
+          res.send(200, results);
+        } catch (err) {
+          Log.error();
+          res.send(400);
+        }
+
+        return next();
+      });
 
       // Bucket endpoints
 

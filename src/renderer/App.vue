@@ -10,11 +10,12 @@
         <input type="text" autofocus class="input" v-model="searchTerm" v-on:keyup.enter="onEnter"/>
       </label>
 
-  </div>
+    </div>
     <div class="wrapper">
       <GroupedList class="list-pane" v-on:active="onActive" v-on:trigger="onTrigger"
                    v-bind:items="searchResults"></GroupedList>
-      <component v-if="searchResults.length > 0" class="preview-pane" v-bind:item="activeItem" v-bind:is="previewComponent"></component>
+      <component v-if="searchResults.length > 0" class="preview-pane" v-bind:item="activeItem"
+                 v-bind:is="previewComponent"></component>
     </div>
   </div>
 </template>
@@ -31,6 +32,7 @@
   import * as fs from "fs";
   import { stripIndent } from "common-tags";
   import Log from "electron-log";
+  import * as http from "http";
 
   export default {
     name: "App",
@@ -79,11 +81,11 @@
     },
     mounted() {
       console.log("App mounted");
-      ipcRenderer.on("search-results", (event: any, arg: any) => {
-        (this as any).searching = false;
-        (this as any).searchResults = arg;
-
-      });
+      // ipcRenderer.on("search-results", (event: any, arg: any) => {
+      //   (this as any).searching = false;
+      //   (this as any).searchResults = arg;
+      //
+      // });
       ipcRenderer.on("window-focused", () => {
         if ((this as any).searchTerm !== "") {
           (this as any).$el.getElementsByTagName("input")[0].value = "";
@@ -93,9 +95,9 @@
           (this as any).searching = true;
         }
       });
-      // Get the initial list of results (TODO This doesn't work)
-      (this as any).search();
-      (this as any).searching = true;
+      // // Get the initial list of results (TODO This doesn't work)
+      // (this as any).search();
+      // (this as any).searching = true;
     },
     methods: {
       open: function(title: any) {
@@ -121,13 +123,16 @@
             let subprocess: ChildProcess | undefined;
             switch (tracker) {
               case "aw-watcher-idea":
-                  Log.verbose(`WindowAccelerator::onTrigger() - Running /usr/local/bin/idea ${item.path}.`);
-                  subprocess = spawn("/usr/local/bin/idea", [item.path], { detached: true, stdio: "ignore" });
+                Log.verbose(`WindowAccelerator::onTrigger() - Running /usr/local/bin/idea ${item.path}.`);
+                subprocess = spawn("/usr/local/bin/idea", [item.path], { detached: true, stdio: "ignore" });
                 break;
               case "aw-watcher-vscode":
                 // VS Code needs the path split into project and file to open as desired.
                 Log.verbose(`WindowAccelerator::onTrigger() - Running /usr/local/bin/code ${item.custom.project} ${item.custom.file}.`);
-                subprocess = spawn("/usr/local/bin/code", [item.custom.project, item.custom.file], { detached: true, stdio: "ignore"});
+                subprocess = spawn("/usr/local/bin/code", [item.custom.project, item.custom.file], {
+                  detached: true,
+                  stdio: "ignore"
+                });
                 break;
               default:
                 shell.showItemInFolder(item.path);
@@ -170,7 +175,7 @@
             ${commands.join(" && ")}
             `;
 
-            fs.writeFile(scriptPath, script, {mode: 0o544}, (err) => {
+            fs.writeFile(scriptPath, script, { mode: 0o544 }, (err) => {
               spawn("open", ["-a", "Terminal", scriptPath], { detached: true, stdio: "ignore" }).unref();
             });
 
@@ -183,7 +188,49 @@
         // focus the results (once they arrive)
       },
       search() {
-        ipcRenderer.sendTo((this as any).backgroundWindowId, "search", {searchTerm: (this as any).searchTerm, project: (this as any).project});
+        // ipcRenderer.sendTo((this as any).backgroundWindowId, "search", {
+        //   searchTerm: (this as any).searchTerm,
+        //   project: (this as any).project
+        // });
+        const url = `http://127.0.0.1:5600/api/0/artifacts?contains=${(this as any).searchTerm}&project=${(this as any).project}`;
+        Log.verbose(`Making request: ${url}`);
+        http.get(url, (res) => {
+          const { statusCode } = res;
+          const contentType = res.headers["content-type"] || "";
+
+          let error;
+          if (statusCode !== 200) {
+            error = new Error("Request Failed.\n" +
+              `Status Code: ${statusCode}`);
+          } else if (!/^application\/json/.test(contentType)) {
+            error = new Error("Invalid content-type.\n" +
+              `Expected application/json but received ${contentType}`);
+          }
+          if (error) {
+            Log.error(error.message);
+            // consume response data to free up memory
+            res.resume();
+            return;
+          }
+
+          res.setEncoding("utf8");
+          let rawData = "";
+          res.on("data", (chunk) => {
+            rawData += chunk;
+          });
+          res.on("end", () => {
+            try {
+              const parsedData = JSON.parse(rawData);
+              Log.info(parsedData);
+              (this as any).searching = false;
+              (this as any).searchResults = parsedData;
+            } catch (e) {
+              Log.error(e.message);
+            }
+          });
+        }).on("error", (e) => {
+          Log.error(`Got error: ${e.message}`);
+        });
       }
     },
     computed: {
@@ -263,9 +310,9 @@
     bottom: 0;
     left: 1em;
     /*transform: translateY(-50%);*/
-    margin:auto;
+    margin: auto;
     /*color: #e5e5ea;*/
-    color: lightgray            ;
+    color: lightgray;
   }
 
   label > select {

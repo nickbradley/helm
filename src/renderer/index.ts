@@ -2,10 +2,10 @@ import Vue from "vue";
 import * as AsyncComputed from "vue-async-computed";
 import "vue-awesome/icons" // import all icons (use vue-awesome/icons/ICON_NAME to import specific icons)
 import Icon from "vue-awesome/components/Icon.vue";
-import * as path from "path";
-import { remote } from "electron";
+// import * as path from "path";
+// import { remote } from "electron";
 import App from "./App.vue";
-import { Daemon } from "../backend/Daemon";
+// import { Daemon } from "../backend/Daemon";
 import Log from "electron-log";
 
 
@@ -25,18 +25,18 @@ function renderUI() {
 }
 
 async function startBackground() {
-  Log.transports.file.fileName = "background.log";
-  Log.info("Starting helm daemon process...");
-
-  const configFile = path.join(remote.app.getPath("userData"), "helmconfig.json");
-  const daemon = new Daemon(configFile);
-  await daemon.start();
-
-  window.addEventListener("unload", async () => {
-    await daemon.stop();
-  });
-
-  Log.info("Helm daemon process is running.");
+  // Log.transports.file.fileName = "background.log";
+  // Log.info("Starting helm daemon process...");
+  //
+  // const configFile = path.join(remote.app.getPath("userData"), "helmconfig.json");
+  // const daemon = new Daemon(configFile);
+  // await daemon.start();
+  //
+  // window.addEventListener("unload", async () => {
+  //   await daemon.stop();
+  // });
+  //
+  // Log.info("Helm daemon process is running.");
 }
 
 

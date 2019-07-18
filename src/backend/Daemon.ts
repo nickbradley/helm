@@ -2,8 +2,8 @@ import { Database } from "./Database";
 import { Server } from "./Server";
 import { ChildProcess, spawn } from "child_process";
 import * as path from "path";
-import { ContextModel } from "./ContextModel";
-import {ipcRenderer} from "electron";
+// import { ContextModel } from "./ContextModel";
+// import {ipcRenderer} from "electron";
 import * as fs from "fs-extra";
 import Log from "electron-log";
 // import { Platform } from "../common/Platform";
@@ -16,31 +16,37 @@ export class Daemon {
   public readonly awPath: string;
 
   private db: Database;
-  private model: ContextModel;
+  // private model: ContextModel;
   private server: Server;
   private windowWatcher!: ChildProcess;
   private afkWatcher!: ChildProcess;
 
   private canCollectData: boolean;
 
-  constructor(configFile: string) {
+  constructor() {
     Log.info(`Daemon::init() - Initializing process.`);
 
-    let config: {[key: string]: any};
-    try {
-      Log.info(`Reading config file from ${configFile}`);
-      config = JSON.parse(fs.readFileSync(configFile, "utf8"));
-    } catch (err) {
-      Log.error(`<FATAL> Failed to read ${configFile}. Please ensure the file exists and is valid JSON.`);
-      throw err;
-    }
+    // // TODO make this configurable from the env
+    // const projects = {
+    //   "helm": {
+    //     "root": "/Users/ncbrad/do/helm"
+    //   }
+    // };
 
-    this.restPort = 5600;
-    this.dbPath = config["dbPath"];  // /Users/ncbrad/Library/Application Support/helm-dev/helm.db
-    this.awPath = config["awPath"];
+    this.restPort = Number(process.env.PORT) || 5600;
+
+    if (!process.env.DB_PATH) {
+      throw new Error("Required env var DB_PATH is not set.");
+    }
+    this.dbPath = process.env.DB_PATH;
+
+    if (!process.env.AW_PATH) {
+      throw new Error("Required env var AW_PATH is not set.");
+    }
+    this.awPath = process.env.AW_PATH;
 
     this.db = new Database(this.dbPath);
-    this.model = new ContextModel(config["projects"]);
+    // this.model = new ContextModel(projects);
     this.server = new Server("HelmWatcher");
 
     this.canCollectData = true;
@@ -63,10 +69,10 @@ export class Daemon {
     Log.info(`Daemon::start() - Starting hosted watchers.`);
     await this.startWatchers();
 
-    ipcRenderer.on("search", async (event: any, args: any) => {
-      const results = await this.model.search(args);
-      ipcRenderer.sendTo(event.senderId, "search-results", results);
-    });
+    // ipcRenderer.on("search", async (event: any, args: any) => {
+    //   const results = await this.model.search(args);
+    //   ipcRenderer.sendTo(event.senderId, "search-results", results);
+    // });
   }
 
   public async stop() {
@@ -79,8 +85,8 @@ export class Daemon {
     Log.info(`Daemon::stop() - Stopping REST server.`);
     await this.server.stop();
 
-    Log.info("Daemon::stop() - Removing event listeners.");
-    ipcRenderer.removeAllListeners("search");
+    // Log.info("Daemon::stop() - Removing event listeners.");
+    // ipcRenderer.removeAllListeners("search");
   }
 
   public pauseDataCollection() {
