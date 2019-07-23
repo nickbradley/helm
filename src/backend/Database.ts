@@ -9,6 +9,7 @@ import { Tracker } from "./entities/Tracker";
 import { ProjectSession } from "./entities/ProjectSession";
 import Log from "electron-log";
 import { ActiveProject} from "./entities/ActiveProject";
+import { Usage } from "./entities/Usage";
 
 export class Database {
   public readonly path: string;
@@ -32,7 +33,8 @@ export class Database {
         Shell,
         Tracker,
         Window,
-        ProjectSession
+        ProjectSession,
+        Usage,
       ],
       "synchronize": true,
       "logging": false,

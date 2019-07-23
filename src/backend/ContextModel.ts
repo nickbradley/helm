@@ -1,17 +1,47 @@
-import { getManager } from "typeorm";
+import { getManager, getRepository } from "typeorm";
 import { Platform } from "../common/Platform";
 import Log from "electron-log";
+import { Application } from "./entities/Application";
 
 export class ContextModel {
   public project: string;
   public projects: {[project: string]: {[attr: string]: any}};
   
   constructor(projects: {[project: string]: {}}) {
-    Log.info(`ContextModel() - Initializing with projects: ${projects}`);
+    Log.info(`ContextModel() - Initializing with projects: ${JSON.stringify(projects)}`);
     this.project = "";
     this.projects = projects;
   }
-  
+
+  public async init() {
+    Log.info(`ContextModel::init() - Initializing context model: Adding host applications to database.`);
+    const applications = Platform.listApplications();
+    const appEntities: Application[] = [];
+
+    // TODO There's probably a less destructive way to do this
+    await getRepository(Application).clear();
+
+    for (const app of applications) {
+      const application = new Application();
+      application.identifier = app.id;
+      application.name = app.name;
+      application.icon = ""; // app.icon;
+      application.path = app.path;
+
+      const duplicates = appEntities.filter(e => e.identifier === application.identifier);
+      if (duplicates.length >= 1) {
+        Log.warn(`ContextModel::init() - Skipping duplicate application { id: ${application.identifier}, name: ${application.name} }`);
+      } else {
+        appEntities.push(application);
+        try {
+          await getRepository(Application).insert(application);
+        } catch (err) {
+          Log.warn(`ContextModel::init() - Failed to insert application { id: ${application.identifier}, name: ${application.name} }. ${err}`);
+        }
+      }
+    }
+  }
+
   public async search(opts: {searchTerm: string, project: string}) {
     Log.info(`ContextModel::search(..) - Searching for term '${opts.searchTerm}' in '${opts.project}' project.`);
     if (opts.project && !Object.keys(this.projects).includes(opts.project)) {

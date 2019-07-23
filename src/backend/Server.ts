@@ -8,30 +8,17 @@ import { Tracker } from "./entities/Tracker";
 import { Window } from "./entities/Window";
 import { ObjectLiteral } from "typeorm";
 import Log from "electron-log";
-import { ProjectWatcher } from "./ProjectWatcher";
-import { ContextModel } from "./ContextModel";
+import { Daemon } from "./Daemon";
+import { Usage } from "./entities/Usage";
 
 export class Server {
   private readonly rest: restify.Server;
+  private readonly daemon: Daemon;
 
-  private projectWatcher: ProjectWatcher;
-  private contextModel: ContextModel;
-
-  constructor(name: string) {
+  constructor(daemon: Daemon, name: string) {
     Log.info(`Server() - Creating REST server '${name}'`);
     this.rest = restify.createServer({ name });
-    this.projectWatcher = new ProjectWatcher(["kanboard", "teammates", "helm"]);
-    this.contextModel = new ContextModel({
-      helm: {
-        root: "/Users/ncbrad/do/helm",
-      },
-      kanboard: {
-        root: "fakepath",
-      },
-      teammates: {
-        root: "jksdfsd",
-      },
-    });
+    this.daemon = daemon;
   }
 
   public async start(port: number) {
@@ -65,20 +52,47 @@ export class Server {
       // });
 
 
+      // Launcher interaction endpoints
+      this.rest.post("/api/0/usage/launch", async (req: restify.Request, res: restify.Response, next: restify.Next) => {
+        Log.info(`POST /api/0/usage/launch - ${JSON.stringify(req.body)}`);
+        try {
+          await Usage.insert(req.body);
+        } catch (err) {
+          Log.error(`POST /api/0/usage/launch - ${err}`);
+          res.send(500);
+        }
+
+        return next();
+      });
+
+
       // Artifact endpoints
       this.rest.get("/api/0/artifacts", restify.plugins.queryParser(), async (req: restify.Request, res: restify.Response, next: restify.Next) => {
         Log.info(`GET /api/0/artifacts - contains: ${req.query.contains}; project: ${req.query.project}`);
+        let contains = "";
+        let project = "";
         try {
-          const contains = req.query.contains || "";
-          const project = req.query.project || this.projectWatcher.activeProject!.name;
+          contains = req.query.contains || "";
+          project = req.query.project || this.daemon.projectWatcher.activeProject!.name;
 
-          const results = await this.contextModel.search({ project, searchTerm: contains });
+          const results = await this.daemon.contextModel.search({ project, searchTerm: contains });
           res.send(200, results);
         } catch (err) {
           Log.error();
           res.send(400);
         }
 
+        try {
+          const usage = {
+            created: new Date(),
+            kind: "search",
+            action: contains,
+            resource: project,
+          };
+          await Usage.insert(usage);
+        } catch (err) {
+          Log.warn("Failed to insert usage record");
+        }
         return next();
       });
 
@@ -277,20 +291,20 @@ export class Server {
       case "web.tab.current":
         // @ts-ignore
         const url = (record as Browser).url.toLowerCase();
-        project = this.projectWatcher.extractProjectFromUrl(url);
+        project = this.daemon.projectWatcher.extractProjectFromUrl(url);
         break;
       case "shell.command":
         // @ts-ignore
         const cwd = (record as Shell).cwd.toLowerCase();
-        project = this.projectWatcher.extractProjectFromPath(cwd);
+        project = this.daemon.projectWatcher.extractProjectFromPath(cwd);
         break;
       case "app.editor.activity":
         // @ts-ignore
         project = (record as Editor).project.toLowerCase();
     }
 
-    if (project && this.projectWatcher.projectNames.includes(project)) {
-      await this.projectWatcher.update(project, record.created, record.duration * 1000);
+    if (project && this.daemon.projectWatcher.projectNames.includes(project)) {
+      await this.daemon.projectWatcher.update(project, record.created, record.duration * 1000);
     }
   }
 

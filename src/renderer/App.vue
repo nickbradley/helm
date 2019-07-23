@@ -110,6 +110,14 @@
       },
       onTrigger(item: any) {
         console.log("WindowAccelerator::onTrigger() - ", window);
+
+        const usage = {
+          created: new Date(),
+          kind: "launch",
+          action: "",
+          resource: ""
+        };
+
         switch ((this as any).activeItem.group) {
           case "file":
             console.log("FILE TRIGGERED", item);
@@ -123,11 +131,15 @@
             let subprocess: ChildProcess | undefined;
             switch (tracker) {
               case "aw-watcher-idea":
+                usage.action = "spawn";
+                usage.resource = `/usr/local/bin/idea ${item.path}`;
                 Log.verbose(`WindowAccelerator::onTrigger() - Running /usr/local/bin/idea ${item.path}.`);
                 subprocess = spawn("/usr/local/bin/idea", [item.path], { detached: true, stdio: "ignore" });
                 break;
               case "aw-watcher-vscode":
                 // VS Code needs the path split into project and file to open as desired.
+                usage.action = "spawn";
+                usage.resource = `/usr/local/bin/code ${item.custom.project} ${item.custom.file}`;
                 Log.verbose(`WindowAccelerator::onTrigger() - Running /usr/local/bin/code ${item.custom.project} ${item.custom.file}.`);
                 subprocess = spawn("/usr/local/bin/code", [item.custom.project, item.custom.file], {
                   detached: true,
@@ -145,11 +157,15 @@
           case "window":
             console.log("WINDOW TRIGGERED", item);
             // description, group, icon, relevance, title
+            usage.action = "activateWindow";
+            usage.resource = item.description;
             Platform.activateWindow(item.description);
             break;
           case "website":
             console.log("WEBSITE TRIGGERED", item);
             // description, group, icon, relevance, title, url
+            usage.action = "openExternal";
+            usage.resource = item.url;
             shell.openExternal(item.url);
             break;
           case "shell session":
@@ -178,9 +194,37 @@
             fs.writeFile(scriptPath, script, { mode: 0o544 }, (err) => {
               spawn("open", ["-a", "Terminal", scriptPath], { detached: true, stdio: "ignore" }).unref();
             });
-
+            usage.action = "spawn";
+            usage.resource = script;
             break;
         }
+
+        // POST to helmd
+        const data = JSON.stringify(usage);
+        const options = {
+          hostname: "localhost",
+          port: 5600,
+          path: "/api/0/usage/launch",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": data.length
+          }
+        };
+        const req = http.request(options, (res) => {
+          console.log(`statusCode: ${res.statusCode}`);
+
+          res.on("data", (d) => {
+            process.stdout.write(d);
+          });
+        });
+        req.on("error", (error) => {
+          console.error(error);
+        });
+        req.write(data);
+        req.end();
+
+
       },
       onEnter() {
         // clear the input timer

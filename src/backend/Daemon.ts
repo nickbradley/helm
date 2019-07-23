@@ -2,21 +2,20 @@ import { Database } from "./Database";
 import { Server } from "./Server";
 import { ChildProcess, spawn } from "child_process";
 import * as path from "path";
-// import { ContextModel } from "./ContextModel";
-// import {ipcRenderer} from "electron";
 import * as fs from "fs-extra";
 import Log from "electron-log";
-// import { Platform } from "../common/Platform";
-// import { Application } from "./entities/Application";
-// import { getRepository } from "typeorm";
+import { ProjectWatcher } from "./ProjectWatcher";
+import { ContextModel } from "./ContextModel";
 
 export class Daemon {
   public readonly restPort: number;
   public readonly dbPath: string;
   public readonly awPath: string;
+  public readonly projects: {[name: string]: any};
+  public readonly projectWatcher: ProjectWatcher;
+  public readonly contextModel: ContextModel;
 
   private db: Database;
-  // private model: ContextModel;
   private server: Server;
   private windowWatcher!: ChildProcess;
   private afkWatcher!: ChildProcess;
@@ -25,13 +24,6 @@ export class Daemon {
 
   constructor() {
     Log.info(`Daemon::init() - Initializing process.`);
-
-    // // TODO make this configurable from the env
-    // const projects = {
-    //   "helm": {
-    //     "root": "/Users/ncbrad/do/helm"
-    //   }
-    // };
 
     this.restPort = Number(process.env.PORT) || 5600;
 
@@ -44,10 +36,24 @@ export class Daemon {
       throw new Error("Required env var AW_PATH is not set.");
     }
     this.awPath = process.env.AW_PATH;
+    // TODO make this configurable from the env
+    this.projects = {
+      helm: {
+        root: "/Users/Shared/helm",
+      },
+      kanboard: {
+        root: "/Users/studyparticipant/projects/kanboard",
+      },
+      teammates: {
+        root: "/Users/studyparticipant/project/teammates",
+      },
+    };
 
     this.db = new Database(this.dbPath);
-    // this.model = new ContextModel(projects);
-    this.server = new Server("HelmWatcher");
+    this.server = new Server(this, "HelmWatcher");
+    // TODO ProjectWatcher can probably be merged with ContextModel...
+    this.projectWatcher = new ProjectWatcher(Object.keys(this.projects));
+    this.contextModel = new ContextModel(this.projects);
 
     this.canCollectData = true;
   }
@@ -60,33 +66,23 @@ export class Daemon {
     Log.info(`Daemon::start() - Connecting to database.`);
     await this.db.connect();
 
-    // Log.info(`Daemon::start() - Getting information about installed applications.`);
-    // await this.loadHostApplications();
+    await this.contextModel.init();
 
     Log.info(`Daemon::start() - Starting ActivityWatch-compatible REST server.`);
     await this.server.start(this.restPort);
 
     Log.info(`Daemon::start() - Starting hosted watchers.`);
     await this.startWatchers();
-
-    // ipcRenderer.on("search", async (event: any, args: any) => {
-    //   const results = await this.model.search(args);
-    //   ipcRenderer.sendTo(event.senderId, "search-results", results);
-    // });
   }
 
   public async stop() {
     Log.info(`Daemon::stop() - Stopping hosted watchers.`);
-    // TODO Check if there was an error that already kill process (so we don't
-    // inadvertently kill some random process
+    // TODO Check if there was an error that already kill process (so we don't inadvertently kill some random process)
     this.windowWatcher.kill("SIGINT");
     this.afkWatcher.kill("SIGINT");
 
     Log.info(`Daemon::stop() - Stopping REST server.`);
     await this.server.stop();
-
-    // Log.info("Daemon::stop() - Removing event listeners.");
-    // ipcRenderer.removeAllListeners("search");
   }
 
   public pauseDataCollection() {
@@ -119,40 +115,5 @@ export class Daemon {
     //   Log.error(`aw-watcher-afk failed unexpectedly with code ${code}.`);
     // });
   };
-
-  // /*  TODO Report this as a TypeORM bug...
-  //   After considerable time I figured out why `getRepository(Application).insert(appEntities)` causes a seg fault: it freakin' escapes column names with double-quotes instead of single-quotes!
-  //   Not sure why the sqlite3 doesn't catch this (or convert them).
-  //
-  //   If you turn on logging and try to insert a single record you'll see the generate query is `INSERT INTO "application"("identifier", "name", "icon", "path") VALUES (?, ?, ?, ?) -- PARAMETERS: ["com.apple.Notes","Notes","","/Applications/Notes.app"]`
-  //   You can reproduce using `getRepository(Application).query(`insert into "application"("identifier", "name", "icon", "path") values (?,?,?,?)`, [application.identifier, application.name, application.icon, application.path])`
-  //  */
-  // private async loadHostApplications() {
-  //   const applications = Platform.listApplications();
-  //   const appEntities: Application[] = [];
-  //   const appRepo = getRepository(Application);
-  //
-  //   // Log.verbose(`loadHostApplications() - Clearing existing application data...`);
-  //   // await appRepo.clear();
-  //   // await appRepo.query(`delete from 'application'`);
-  //
-  //
-  //   for (const app of applications) {
-  //     const application = new Application();
-  //     application.identifier = app.id;
-  //     application.name = app.name;
-  //     application.icon = app.icon;
-  //     application.path = app.path;
-  //
-  //     const duplicates = appEntities.filter(e => e.identifier === application.identifier);
-  //     if (duplicates.length >= 1) {
-  //       Log.warn(`loadHostApplications() - Skipping duplicate application. Inserted: ${JSON.stringify(duplicates[0])}; Duplicate: ${application}`);
-  //     } else {
-  //       Log.verbose(`loadingHostApplications() - Loading application data: ${application}`);
-  //       await appRepo.query(`insert into 'application'('identifier', 'name', 'icon', 'path') values (?,?,?,?)`, [application.identifier, application.name, application.icon, application.path]);
-  //       appEntities.push(application);
-  //     }
-  //   }
-  // }
 }
 
