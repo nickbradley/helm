@@ -80,7 +80,8 @@ const createWindow = async () => {
     skipTaskbar: true,
     webPreferences: {
       webSecurity: false,     // This should be disabled in production
-      nodeIntegration: true   // This should be disabled in production
+      nodeIntegration: true,  // This should be disabled in production
+      webviewTag: true,       // Might want to consider if there is a better way to preview web pages
     }
   };
 
