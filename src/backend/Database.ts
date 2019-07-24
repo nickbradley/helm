@@ -6,7 +6,6 @@ import { Editor } from "./entities/Editor";
 import { Interaction } from "./entities/Interaction";
 import { Shell } from "./entities/Shell";
 import { Tracker } from "./entities/Tracker";
-import { ProjectSession } from "./entities/ProjectSession";
 import Log from "electron-log";
 import { ActiveProject} from "./entities/ActiveProject";
 import { Usage } from "./entities/Usage";
@@ -33,7 +32,6 @@ export class Database {
         Shell,
         Tracker,
         Window,
-        ProjectSession,
         Usage,
       ],
       "synchronize": true,
