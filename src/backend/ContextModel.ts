@@ -25,7 +25,7 @@ export class ContextModel {
       const application = new Application();
       application.identifier = app.id;
       application.name = app.name;
-      application.icon = ""; // app.icon;
+      application.icon =  app.icon;
       application.path = app.path;
 
       const duplicates = appEntities.filter(e => e.identifier === application.identifier);
