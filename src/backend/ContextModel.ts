@@ -52,7 +52,7 @@ export class ContextModel {
     const term = opts.searchTerm;
     const entityManager = getManager();
     const openWindowTitles = Platform.listWindows().map(w => w.title.substring(0, 50).toLowerCase());
-
+    Log.verbose(`OPEN WINDOWS: ${JSON.stringify(openWindowTitles)}`);
     // The IN operator uses a workaround since node-sqlite3 doesn't support passing IN a parameter
     // https://github.com/mapbox/node-sqlite3/issues/527#issuecomment-400021528.
 
@@ -109,7 +109,7 @@ export class ContextModel {
           from browser
                  join active_project ses on browser.created between ses.start and ses.end and ses.name = ?
                  left join tracker on tracker.id = browser.trackerId
-                 left join application app on app.name = case when tracker.key like '%firefox%' then 'firefox' else 'google chrome' end
+                 left join application app on lower(app.name) = case when tracker.key like '%firefox%' then 'firefox' else 'google chrome' end
           where title like ? or url like ?
           group by title
         ),
