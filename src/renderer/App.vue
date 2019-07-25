@@ -199,6 +199,8 @@
             break;
         }
 
+        ipcRenderer.send("hide-window");
+
         // POST to helmd
         const data = JSON.stringify(usage);
         const options = {
@@ -265,7 +267,7 @@
           res.on("end", () => {
             try {
               const parsedData = JSON.parse(rawData);
-              Log.info(parsedData);
+              // Log.info(parsedData);
               (this as any).searching = false;
               (this as any).searchResults = parsedData;
             } catch (e) {

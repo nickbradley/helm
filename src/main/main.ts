@@ -2,6 +2,7 @@ import {
   app,
   BrowserWindow,
   globalShortcut,
+  ipcMain,
   Menu,
   Tray,
   screen
@@ -25,6 +26,10 @@ app.on("ready", async () => {
 
   globalShortcut.register("Control+Space", () => {
     toggleWindow();
+  });
+
+  ipcMain.on("hide-window", () => {
+    mainWindow.hide();
   });
 });
 
