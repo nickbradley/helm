@@ -24,7 +24,7 @@
     },
     asyncComputed: {
       async previewPaneFile() {
-        console.log("FileAccelerator::onActive() - ", this.file);
+        // console.log("FileAccelerator::onActive() - ", this.file);
 
         // https://stackoverflow.com/a/20732091
         function humanFileSize(size) {
@@ -40,13 +40,13 @@
         if (hljs.getLanguage(ext)) {
           // We do the async to void blocking the UI; loading the preview is low priority.
           fs.readFile(this.file.path, "utf8", (err, data) => {
-            console.log("ERROR: ", err, "Data: ", data);
+            // console.log("ERROR: ", err, "Data: ", data);
             let displayHtml;
             try {
               const output = hljs.highlight(ext, data);
               displayHtml = `<pre><code>${output.value}</code></pre>`;
             } catch (err) {
-              displayHtml = "Failed to load preview";
+              displayHtml = `<div class="centered">Failed to load preview.</div>`;
             }
             this.previewPane = displayHtml;
           });
