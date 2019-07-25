@@ -36,19 +36,27 @@
       };
     },
     updated() {
-      // Set the first item in the list to be active
-      const listElement = this.$el.getElementsByTagName("li")[0];
+        // Reset the active items
+        const listElements = this.$el.getElementsByTagName("li");
+        for (const el of listElements) {
+          el.classList.remove("active");
+          el.tabIndex = -1;
+        }
 
-      if (!listElement) {
-        return;
-      }
+        // Set the first item in the list to be active
+        const listElement = listElements[0];
 
-      listElement.tabIndex = 0;
-      listElement.classList.add("active");
+        if (!listElement) {
+          return;
+        }
 
+        listElement.tabIndex = 0;
+        listElement.classList.add("active");
+        listElement.scrollIntoView();
+        this.$root.$el.getElementsByTagName("input")[0].focus();
 
-      this.activeItemIndex = 0;
-      this.$emit("active", this.items[this.activeItemIndex]);
+        this.activeItemIndex = 0;
+        this.$emit("active", this.items[this.activeItemIndex]);
     },
     computed: {
       groupedItems() {
