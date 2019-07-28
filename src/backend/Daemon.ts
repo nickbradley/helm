@@ -45,7 +45,7 @@ export class Daemon {
         root: "/Users/studyparticipant/projects/kanboard",
       },
       teammates: {
-        root: "/Users/studyparticipant/project/teammates",
+        root: "/Users/studyparticipant/projects/teammates",
       },
     };
 
