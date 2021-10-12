@@ -28,7 +28,7 @@
     "@types/restify": "^7.2.9",
     "@types/restify-cors-middleware": "^1.0.1",
     "asar": "^1.0.0",
-    "electron": "^5.0.7",
+    "electron": "^11.5.0",
     "electron-builder": "^20.38.5",
     "electron-webpack": "^2.6.2",
     "electron-webpack-ts": "^3.1.1",
